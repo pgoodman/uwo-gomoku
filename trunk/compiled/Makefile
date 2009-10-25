@@ -7,18 +7,26 @@ CC = gcc
 CFLAGS = -O2 -g -pedantic -pedantic-errors -Wall -Werror -c -ansi
 OBJ_FILE = fiveinarow
 
-OBJS = ./main.o ./context.o ./board.o
+INCLUDES = 
+OBJS = ./main.o ./context.o ./board.o 
+EXT_OBJS = ./ahocorasick.o
 
 all: ${OBJ_FILE}
-
-${OBJ_FILE}: ${OBJS}
-	${CC} -o $@ ${OBJS}
-
-%.o: ../%.c
-	${CC} $^ $(CFLAGS)
 
 clean:
 	-rm *.o
 
 realclean: clean
 	-rm ${OBJ_FILE}
+
+# compile the project
+${OBJ_FILE}: ${OBJS} ${EXT_OBJS}
+	${CC} ${INCLUDES} -o $@ ${OBJS} ${EXT_OBJS}
+
+# base objects
+%.o: ../%.c
+	${CC} ${INCLUDES} $^ $(CFLAGS)
+
+# aho-corasick algorithm
+%.o: ../ahocorasick/%.c
+	${CC} ${INCLUDES} $^ $(CFLAGS)
