@@ -14,17 +14,53 @@
 #include "context.h"
 #include "board.h"
 
-#if 0
-int main(const int argc, const char *argv[]) {
-    board_cell_t board[BOARD_HEIGHT][BOARD_WIDTH];
 
-    if(!read_board(board)) {
+#if 1
+
+/**
+ * Do simple
+ */
+int main(const int argc, const char *argv[]) {
+    board_t board;
+    board_cell_t *cell;
+    player_t player_id;
+
+    /* get the player information */
+    if(argc < 2) {
+        DIE("No player id was given.\n");
+    }
+
+    if(*argv[1] == '1') {
+        player_id = PLAYER_1;
+    } else if(*argv[1] == '2') {
+        player_id = PLAYER_2;
+    } else {
+        DIE("Invalid player id given.\n");
+    }
+
+    /* get and check the board. */
+    if(!read_board(&board)) {
         DIE("Unable to read playing board.\n");
     }
 
-    board[10][10] = CELL_PLAYER2;
+    /* make the first move of a game in the center of the board */
+    if(board.num_empty_cells == BOARD_NUM_CELLS) {
+        cell = &(board.cells[BOARD_HEIGHT / 2][BOARD_WIDTH / 2]);
+        cell->player_id = player_id;
+        cell->is_nothing = 0;
 
-    if(!put_board(board)) {
+    /* search for a move to make. */
+    } else {
+        /*
+        if(!board.num_empty_cells) {
+            PRINT("Game is over.\n");
+            return 1;
+        }
+        */
+    }
+
+    /* output the new board to the file */
+    if(!put_board(&board)) {
         DIE("Unable to output the board.\n");
     }
 

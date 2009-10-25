@@ -14,13 +14,23 @@
 #include <stdio.h>
 #include "common.h"
 
-typedef enum {
-    CELL_EMPTY = 0,
-    CELL_PLAYER1 = 1,
-    CELL_PLAYER2 = 2
+/* board cell type */
+typedef struct {
+    player_t player_id;
+    unsigned int is_nothing:1;
 } board_cell_t;
 
-int read_board(board_cell_t[BOARD_HEIGHT][BOARD_WIDTH]);
-int put_board(board_cell_t[BOARD_HEIGHT][BOARD_WIDTH]);
+/* board type */
+typedef struct {
+    board_cell_t cells[BOARD_HEIGHT][BOARD_WIDTH];
+    int num_empty_cells;
+    int left; /* bounding box */
+    int top;
+    int right;
+    int bottom;
+} board_t;
+
+int read_board(board_t *);
+int put_board(board_t *);
 
 #endif /* BOARD_H_ */
