@@ -13,7 +13,7 @@
 #include "common.h"
 #include "context.h"
 #include "board.h"
-
+#include "evaluate.h"
 
 #if 1
 
@@ -23,7 +23,13 @@
 int main(const int argc, const char *argv[]) {
     board_t board;
     board_cell_t *cell;
+    board_cell_string_t string;
     player_t player_id;
+
+    /* make sure the board length is legal */
+    if(BOARD_LENGTH < 5) {
+        DIE("Program compiled with illegal board length.\n");
+    }
 
     /* get the player information */
     if(argc < 2) {
@@ -45,12 +51,18 @@ int main(const int argc, const char *argv[]) {
 
     /* make the first move of a game in the center of the board */
     if(board.num_empty_cells == BOARD_NUM_CELLS) {
-        cell = &(board.cells[BOARD_HEIGHT / 2][BOARD_WIDTH / 2]);
+        cell = &(board.cells[BOARD_CENTER][BOARD_CENTER]);
         cell->player_id = player_id;
         cell->is_nothing = 0;
 
     /* search for a move to make. */
     } else {
+
+        reset_board_string(&board, &string);
+        while(generate_board_string(&string)) {
+            printf("string generated: %s \n", string.str);
+        }
+
         /*
         if(!board.num_empty_cells) {
             PRINT("Game is over.\n");
