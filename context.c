@@ -1,5 +1,5 @@
 /*
- * alarm.c
+ * context.c
  *
  *  Created on: Oct 24, 2009
  *      Author: petergoodman
@@ -9,13 +9,12 @@
 #include "context.h"
 
 static jmp_buf *orig_context = NULL;
-static int in_context = 0;
 
 /**
  * Switch contexts when the first context is interrupted.
  */
 static void switch_context_on_signal(int sig) {
-    if(in_context && sig == SIGALRM) {
+    if(NULL != orig_context && SIGALRM == sig) {
         longjmp(*orig_context, 0);
     }
 }
@@ -26,9 +25,7 @@ static void switch_context_on_signal(int sig) {
  * for some reason someone might have called switch_context_after twice.
  */
 void yield(void) {
-    if(in_context) {
-        longjmp(*orig_context, 0);
-    }
+    raise(SIGALRM);
 }
 
 /**
@@ -43,12 +40,11 @@ void timed_computation(context_func_t *func,
 
     /* if we are currently in a timed context then make sure we don't begin
      * another one that might step over it. */
-    if(in_context) {
+    if(NULL != orig_context) {
         raise(SIGABRT);
     }
 
     orig_context = &context;
-    in_context = 1;
 
     /* set the max search time */
     if(num_seconds) {
@@ -64,7 +60,7 @@ void timed_computation(context_func_t *func,
         /* notify that we are no longer in a context that can be jumped out
          * of. */
         } else {
-            in_context = 0;
+            orig_context = NULL;
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * config.h
+ * common
  *
  *  Created on: Oct 24, 2009
  *      Author: petergoodman
@@ -18,6 +18,16 @@
 #define BOARD_DIR "./"
 #define BOARD_FILE "board.txt" /* default location of board file */
 
-#define DIE(err) {fprintf(stderr, "%s", err);exit(EXIT_FAILURE);}
+#define SEARCH_BOUNDS 1 /* extends the bounding box to look for successors */
+
+#define BOARD_NUM_CELLS BOARD_WIDTH * BOARD_HEIGHT
+
+#define DIE(err) {fprintf(stderr, "%s", (err));exit(EXIT_FAILURE);}
+#define PRINT(str) fprintf(stdout, "%s", (str));
+
+typedef enum {
+    PLAYER_1 = 1,
+    PLAYER_2 = 2
+} player_t;
 
 #endif /* COMMON_H_ */
