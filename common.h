@@ -9,6 +9,8 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+#include <assert.h>
+
 /* configuration macros */
 #define MAX_SEARCH_TIME 1 /* time limit for solution searching */
 #define MAX_SEARCH_DEPTH 10 /* depth-limited alpha-beta search */
@@ -34,6 +36,8 @@
 #define PRINT(str) {fprintf(stdout, "%s", (str));}
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define STATIC_ASSERT(pred) switch(0){case 0:case (pred):;}
+#define DYNAMIC_ASSERT(pred) assert((pred))
 
 /* types */
 typedef enum {

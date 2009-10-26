@@ -8,7 +8,7 @@ CFLAGS = -O2 -g -pedantic -pedantic-errors -Wall -Werror -c -ansi
 OBJ_FILE = fiveinarow
 
 INCLUDES = 
-OBJS = ./main.o ./context.o ./board.o 
+OBJS = ./main.o ./context.o ./board.o  ./board-cell-seq.o
 EXT_OBJS = ./ahocorasick.o
 
 all: ${OBJ_FILE}
