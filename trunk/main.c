@@ -13,6 +13,7 @@
 #include "common.h"
 #include "context.h"
 #include "board.h"
+#include "board-cell-seq.h"
 #include "evaluate.h"
 
 #if 1
@@ -23,13 +24,11 @@
 int main(const int argc, const char *argv[]) {
     board_t board;
     board_cell_t *cell;
-    board_cell_string_t string;
+    board_cell_seq_t seq;
     player_t player_id;
 
     /* make sure the board length is legal */
-    if(BOARD_LENGTH < 5) {
-        DIE("Program compiled with illegal board length.\n");
-    }
+    STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQUENCE_LENGTH);
 
     /* get the player information */
     if(argc < 2) {
@@ -58,9 +57,9 @@ int main(const int argc, const char *argv[]) {
     /* search for a move to make. */
     } else {
 
-        reset_board_string(&board, &string);
-        while(generate_board_string(&string)) {
-            printf("string generated: %s \n", string.str);
+        init_bcs(&board, &seq);
+        while(generate_bcs(&seq)) {
+            printf("string generated of length %d \n", seq.len);
         }
 
         /*

@@ -30,19 +30,7 @@ typedef struct {
     int bottom;
 } board_t;
 
-/* type representing a single character sequence of board cells and a
- * generator for the next sequence. */
-typedef struct {
-    int id; /* the id of last string that was generated */
-    int dir; /* direction that we are generating strings from */
-    char str[BOARD_LENGTH + 1]; /* the string */
-    board_t *board; /* the board from which the strings come */
-} board_cell_string_t;
-
 int read_board(board_t *);
 int put_board(board_t *);
-
-void reset_board_string(cont board_t *board, board_cell_string_t *seq);
-int generate_board_string(board_cell_string_t *seq);
 
 #endif /* BOARD_H_ */
