@@ -13,22 +13,99 @@
 #include "common.h"
 #include "context.h"
 #include "board.h"
-#include "board-cell-seq.h"
-#include "evaluate.h"
+#include "threat.h"
 
 #if 1
+
+static void print_board_and_threat(board_t *board, player_t player_id) {
+    int i;
+    int j;
+    board_cell_t *cell;
+
+    printf("Board: \n");
+    for(i = 0; i < BOARD_LENGTH; ++i) {
+        for(j = 0; j < BOARD_LENGTH; ++j) {
+            cell = &(board->cells[i][j]);
+            if(cell->is_nothing) {
+                printf("0 ");
+            } else {
+                printf("%d ", (int) cell->player_id);
+            }
+        }
+        printf("\n");
+    }
+
+    printf("\nThreats: \n");
+    for(i = 0; i < BOARD_LENGTH; ++i) {
+        for(j = 0; j < BOARD_LENGTH; ++j) {
+            cell = &(board->cells[i][j]);
+            if(cell->threat_rating == 0) {
+                if(cell->is_nothing == 1) {
+                    printf("0 ");
+                } else if(cell->player_id != player_id) {
+                    printf("X ");
+                } else {
+                    printf("  ");
+                }
+            } else {
+                printf("%d ", cell->threat_benefit[THREAT]);
+            }
+        }
+        printf("\n");
+    }
+
+    printf("\nBenefits: \n");
+    for(i = 0; i < BOARD_LENGTH; ++i) {
+        for(j = 0; j < BOARD_LENGTH; ++j) {
+            cell = &(board->cells[i][j]);
+            if(cell->threat_rating == 0) {
+                if(cell->is_nothing == 1) {
+                    printf("0 ");
+                } else if(cell->player_id != player_id) {
+                    printf("X ");
+                } else {
+                    printf("  ");
+                }
+            } else {
+                printf("%d ", cell->threat_benefit[BENEFIT]);
+            }
+        }
+        printf("\n");
+    }
+
+    printf("\nCombined: \n");
+    for(i = 0; i < BOARD_LENGTH; ++i) {
+        for(j = 0; j < BOARD_LENGTH; ++j) {
+            cell = &(board->cells[i][j]);
+            if(cell->is_nothing == 1) {
+                printf("%4d", cell->threat_rating);
+            } else if(cell->player_id != player_id) {
+                printf("   X");
+            } else {
+                printf("    ");
+            }
+        }
+        printf("\n");
+    }
+}
+
 
 /**
  * Do simple
  */
 int main(const int argc, const char *argv[]) {
+
     board_t board;
     board_cell_t *cell;
     board_cell_seq_t seq;
     player_t player_id;
 
+    int i;
+    int j;
+    int ldiag;
+
     /* make sure the board length is legal */
-    STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQUENCE_LENGTH);
+    STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
 
     /* get the player information */
     if(argc < 2) {
@@ -57,22 +134,48 @@ int main(const int argc, const char *argv[]) {
     /* search for a move to make. */
     } else {
 
-        init_bcs(&board, &seq);
-        while(generate_bcs(&seq)) {
-            printf("string generated of length %d \n", seq.len);
-        }
-
-        /*
+        /* game board is empty */
         if(!board.num_empty_cells) {
             PRINT("Game is over.\n");
             return 1;
         }
-        */
+
+        /* generate the threat matrix for the current board configuration if
+         * it were the current player's turn and also if it were the other
+         * player's turn. */
+        init_bcs(&board, &seq, player_id);
+        while(generate_bcs(&seq)) {
+            update_threats_with_seq(&board, &seq);
+        }
+        compute_threat_ratings(&board);
+
+        print_board_and_threat(&board, player_id);
     }
 
     /* output the new board to the file */
     if(!put_board(&board)) {
         DIE("Unable to output the board.\n");
+    }
+#define DIAGONAL(i,j) (j >= i ? BOARD_LENGTH - (j - i) : BOARD_LENGTH + (i - j))
+
+    printf("\n\n");
+    for(i = 0; i < BOARD_LENGTH; ++i) {
+        for(j = 0; j < BOARD_LENGTH; ++j) {
+            ldiag = DIAGONAL(i, j);
+
+            printf("%3d", ldiag);
+        }
+        printf("\n");
+    }
+
+    printf("\n\n");
+    for(i = 0; i < BOARD_LENGTH; ++i) {
+        for(j = 0; j < BOARD_LENGTH; ++j) {
+            ldiag =  j <= i ? BOARD_LENGTH - DIAGONAL(j, i) : DIAGONAL(j, i);
+
+            printf("%3d", ldiag);
+        }
+        printf("\n");
     }
 
     return 1;

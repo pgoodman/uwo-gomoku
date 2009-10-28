@@ -32,7 +32,7 @@ void yield(void) {
  * Perform a single line of computation for no more than approximately
  * num_seconds. This provides the func a pointer to return its data in.
  */
-void timed_computation(context_func_t *func,
+void timed_computation(timed_func_t *func,
                        void *computed_data,
                        unsigned int num_seconds) {
 
