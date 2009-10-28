@@ -8,11 +8,6 @@
 
 #include "board-cell-seq.h"
 
-#define D_LEFT_RIGHT 0
-#define D_TOP_BOTTOM 1
-#define D_LEFT_DIAG 2
-#define D_RIGHT_DIAG 3
-
 /**
  * Update which sequence to get and the current sequence direction.
  */
@@ -55,6 +50,7 @@ void init_bcs(board_t *board, board_cell_seq_t *seq, const player_t player_id) {
     seq->board = board;
     seq->id = -1;
     seq->dir = D_LEFT_RIGHT;
+    seq->only_one = 0;
 
     /* make the wall, this is a dummy cell */
     seq->wall.player_id = player_id;
@@ -99,6 +95,7 @@ int generate_bcs(board_cell_seq_t *seq) {
     int j_incr; /* how much to increment j by at each iteration */
     int k; /* the index into the current sequence */
     int offset; /* figure out where to initialize i and j for diagonals */
+    int has_sequence;
     board_cell_t *cell;
 
     DYNAMIC_ASSERT(NULL != seq);
@@ -154,6 +151,7 @@ int generate_bcs(board_cell_seq_t *seq) {
          * direction or termination of the generator. */
         if(seq->dir > 1 && i > (BOARD_LENGTH - WINNING_SEQ_LENGTH)) {
             seq->id = BOARD_LENGTH * 2;
+            has_sequence = 0;
             continue;
         }
 
@@ -161,6 +159,14 @@ int generate_bcs(board_cell_seq_t *seq) {
         for(; i >= 0 && i < BOARD_LENGTH && j >= 0 && j < BOARD_LENGTH; ++k) {
 
             cell = &(seq->board->cells[i][j]);
+
+            /*
+            printf(
+                "cell(%d,%d) is %d.\n",
+                i,
+                j,
+                (int)(cell->is_nothing ? 0 : cell->player_id)
+            );*/
 
             /* fill up the string and also keep track of what we've seen. */
             if(cell->is_nothing) {
@@ -176,10 +182,25 @@ int generate_bcs(board_cell_seq_t *seq) {
             j += j_incr;
         }
 
-    } while(!(empty_board_pos_found && non_empty_board_pos_found));
+        has_sequence = empty_board_pos_found && non_empty_board_pos_found;
+
+    } while(!seq->only_one && !has_sequence);
 
     /* move the trailing wall */
     seq->cells[seq->len + 1] = &(seq->wall);
 
-    return 1;
+    return has_sequence;
+}
+
+/**
+ * Generate the nth board cell sequence and then reset the generator to its
+ * previous state.
+ */
+int generate_nth_bcs(board_cell_seq_t *seq, const int n, const int dir) {
+
+    seq->dir = dir;
+    seq->id = n - 1;
+    seq->only_one = 1;
+
+    return generate_bcs(seq);
 }

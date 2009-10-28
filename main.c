@@ -100,10 +100,6 @@ int main(const int argc, const char *argv[]) {
     board_cell_seq_t seq;
     player_t player_id;
 
-    int i;
-    int j;
-    int ldiag;
-
     /* make sure the board length is legal */
     STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
 
@@ -147,36 +143,24 @@ int main(const int argc, const char *argv[]) {
         while(generate_bcs(&seq)) {
             update_threats_with_seq(&board, &seq);
         }
-        compute_threat_ratings(&board);
+        compute_threat_ratings(&board, 0, BOARD_LENGTH, BOARD_LENGTH, 0);
 
+        print_board_and_threat(&board, player_id);
+
+        printf("\n\nAdding move and patching....\n\n");
+
+        cell = &(board.cells[0][0]);
+        cell->is_nothing = 0;
+        cell->player_id = PLAYER_1;
+
+        patch_threat_ratings(&board, cell, player_id);
         print_board_and_threat(&board, player_id);
     }
 
     /* output the new board to the file */
-    if(!put_board(&board)) {
+    /*if(!put_board(&board)) {
         DIE("Unable to output the board.\n");
-    }
-#define DIAGONAL(i,j) (j >= i ? BOARD_LENGTH - (j - i) : BOARD_LENGTH + (i - j))
-
-    printf("\n\n");
-    for(i = 0; i < BOARD_LENGTH; ++i) {
-        for(j = 0; j < BOARD_LENGTH; ++j) {
-            ldiag = DIAGONAL(i, j);
-
-            printf("%3d", ldiag);
-        }
-        printf("\n");
-    }
-
-    printf("\n\n");
-    for(i = 0; i < BOARD_LENGTH; ++i) {
-        for(j = 0; j < BOARD_LENGTH; ++j) {
-            ldiag =  j <= i ? BOARD_LENGTH - DIAGONAL(j, i) : DIAGONAL(j, i);
-
-            printf("%3d", ldiag);
-        }
-        printf("\n");
-    }
+    }*/
 
     return 1;
 }
