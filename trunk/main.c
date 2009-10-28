@@ -34,7 +34,7 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
         }
         printf("\n");
     }
-
+/*
     printf("\nThreats: \n");
     for(i = 0; i < BOARD_LENGTH; ++i) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
@@ -72,17 +72,17 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
         }
         printf("\n");
     }
-
+*/
     printf("\nCombined: \n");
     for(i = 0; i < BOARD_LENGTH; ++i) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
             cell = &(board->cells[i][j]);
             if(cell->is_nothing == 1) {
-                printf("%4d", cell->threat_rating);
+                printf("%5d", cell->threat_rating);
             } else if(cell->player_id != player_id) {
-                printf("   X");
+                printf("    X");
             } else {
-                printf("    ");
+                printf("    _");
             }
         }
         printf("\n");
@@ -139,14 +139,15 @@ int main(const int argc, const char *argv[]) {
         /* generate the threat matrix for the current board configuration if
          * it were the current player's turn and also if it were the other
          * player's turn. */
-        init_bcs(&board, &seq, player_id);
+        init_bcs(&board, &seq);
         while(generate_bcs(&seq)) {
-            update_threats_with_seq(&board, &seq);
+            update_threats_with_seq(&board, &seq, player_id);
         }
-        compute_threat_ratings(&board, 0, BOARD_LENGTH, BOARD_LENGTH, 0);
+        /*compute_threat_ratings(&board, 0, BOARD_LENGTH, BOARD_LENGTH, 0);*/
 
         print_board_and_threat(&board, player_id);
 
+        /*
         printf("\n\nAdding move and patching....\n\n");
 
         cell = &(board.cells[0][0]);
@@ -155,6 +156,7 @@ int main(const int argc, const char *argv[]) {
 
         patch_threat_ratings(&board, cell, player_id);
         print_board_and_threat(&board, player_id);
+        */
     }
 
     /* output the new board to the file */

@@ -43,7 +43,7 @@ static void update_bcs(board_cell_seq_t *seq) {
 /**
  * Initialize a board sequence generator.
  */
-void init_bcs(board_t *board, board_cell_seq_t *seq, const player_t player_id) {
+void init_bcs(board_t *board, board_cell_seq_t *seq) {
     DYNAMIC_ASSERT(NULL != board);
     DYNAMIC_ASSERT(NULL != seq);
 
@@ -51,22 +51,6 @@ void init_bcs(board_t *board, board_cell_seq_t *seq, const player_t player_id) {
     seq->id = -1;
     seq->dir = D_LEFT_RIGHT;
     seq->only_one = 0;
-
-    /* make the wall, this is a dummy cell */
-    seq->wall.player_id = player_id;
-    seq->wall.is_nothing = 0;
-    seq->wall.threat_benefit[THREAT] = DEFAULT_THREAT;
-    seq->wall.threat_benefit[BENEFIT] = DEFAULT_BENEFIT;
-    seq->wall.threat_rating = 0;
-    seq->cells[0] = &(seq->wall);
-}
-
-/**
- * Change the wall of a board cell sequence.
- */
-void change_bcs_player(board_cell_seq_t *seq, const player_t player_id) {
-    DYNAMIC_ASSERT(NULL != seq);
-    seq->wall.player_id = player_id;
 }
 
 /**
@@ -105,7 +89,7 @@ int generate_bcs(board_cell_seq_t *seq) {
         update_bcs(seq);
 
         i = j = i_incr = j_incr = 0;
-        k = 1;
+        k = 0;
         empty_board_pos_found = 0;
         non_empty_board_pos_found = 0;
         offset = WINNING_SEQ_LENGTH + seq->id;
@@ -160,14 +144,6 @@ int generate_bcs(board_cell_seq_t *seq) {
 
             cell = &(seq->board->cells[i][j]);
 
-            /*
-            printf(
-                "cell(%d,%d) is %d.\n",
-                i,
-                j,
-                (int)(cell->is_nothing ? 0 : cell->player_id)
-            );*/
-
             /* fill up the string and also keep track of what we've seen. */
             if(cell->is_nothing) {
                 empty_board_pos_found = 1;
@@ -185,9 +161,6 @@ int generate_bcs(board_cell_seq_t *seq) {
         has_sequence = empty_board_pos_found && non_empty_board_pos_found;
 
     } while(!seq->only_one && !has_sequence);
-
-    /* move the trailing wall */
-    seq->cells[seq->len + 1] = &(seq->wall);
 
     return has_sequence;
 }

@@ -9,66 +9,81 @@
 #include "threat.h"
 
 /**
- * For each cell, score the cells to the left and right in the current
- * sequence of cells.
+ * Score the cells within the local space of each cell in some cell sequence.
  */
 static void update_cell_threats(board_cell_t **cells,
-                                const int curr_cell,
-                                const int threat_benefit,
+                                const int left,
+                                const int right,
                                 const player_t player_id) {
-    int j;
+    int i;
+    threat_rating_t threat = 0;
+    threat_rating_t benefit = 0;
 
     /* go to the left in the sequence */
-    for(j = curr_cell - 1; j > curr_cell - WINNING_SEQ_LENGTH; --j) {
-        if(cells[j]->is_nothing) {
-            ++(cells[j]->threat_benefit[threat_benefit]);
+    for(i = left + 1; i < right; ++i) {
 
-        /* we hit a wall, stop */
-        } else if(cells[j]->player_id == player_id) {
-            break;
+        /* empty */
+        if(cells[i]->is_nothing) {
+
+        /* our own chip */
+        } else if(benefit >= 0 && cells[i]->player_id == player_id) {
+            threat = -1;
+            benefit += 1;
+
+        /* opponent */
+        } else if(threat >= 0 && cells[i]->player_id != player_id) {
+            benefit = -1;
+            threat += 1;
         }
     }
 
-    /* go to the right */
-    for(j = curr_cell + 1; j < curr_cell + WINNING_SEQ_LENGTH; ++j) {
-        if(cells[j]->is_nothing) {
-            ++(cells[j]->threat_benefit[threat_benefit]);
+    threat = (threat > 0) ? pow(THREAT_BASE, threat) : 0;
+    benefit = (benefit > 0) ? pow(BENEFIT_BASE, benefit) : 0;
+    threat += benefit;
 
-        /* we hit a wall, stop */
-        } else if(cells[j]->player_id == player_id) {
-            break;
+    if(threat > 0) {
+        for(i = left + 1; i < right; ++i) {
+            if(cells[i]->is_nothing) {
+                cells[i]->threat_rating += threat;
+            }
         }
     }
 }
+
+/**
+ * Clear all the threat ratings except for the ignore cell in a sequence.
+ */
+static void clear_threats_with_seq(board_cell_seq_t *seq,
+                                   board_cell_t *ignore_cell) {
+    int i = 0;
+    for(; i < seq->len; ++i) {
+        if(seq->cells[i] == ignore_cell) {
+            continue;
+        }
+        seq->cells[i]->threat_rating = DEFAULT_THREAT;
+    }
+}
+
 
 /**
  * Given a sequence of adjacent cells from the game board, increase the threat
  * rating of each empty cell that is near an opponent chip and increase the
  * benefit rating of each empty cell that is near our chips.
  */
-void update_threats_with_seq(board_t *board, board_cell_seq_t *seq) {
+void update_threats_with_seq(board_t *board,
+                             board_cell_seq_t *seq,
+                             player_t player_id) {
     int i; /* current cell */
     board_cell_t **cells = seq->cells;
-    const player_t player_id = cells[0]->player_id; /* the threatened player */
-    const player_t opponent_id = OPPONENT(player_id);
 
     /* look at each cell in the sequence */
-    for(i = 1; i <= seq->len; ++i) {
-
-        /* empty cell or one of our chips */
-        if(cells[i]->is_nothing) {
-            continue;
-
-        /* us */
-        } else if(cells[i]->player_id == player_id) {
-            change_bcs_player(seq, opponent_id);
-            update_cell_threats(cells, i, BENEFIT, opponent_id);
-            change_bcs_player(seq, player_id);
-
-        /* opponent */
-        } else {
-            update_cell_threats(cells, i, THREAT, player_id);
-        }
+    for(i = 0; i < seq->len; ++i) {
+        update_cell_threats(
+            cells,
+            MAX(i - (LOCAL_SPACE + 1), -1), /* left bound, exclusive */
+            MIN(i + (LOCAL_SPACE + 1), seq->len), /* right bound, exclusive */
+            player_id
+        );
     }
 }
 
@@ -80,22 +95,7 @@ void compute_threat_ratings(board_t *board,
                             const int right,
                             const int bottom,
                             const int left) {
-    int i;
-    int j;
-    board_cell_t *cell;
 
-    for(i = top; i < bottom; ++i) {
-        for(j = left; j < right; ++j) {
-            cell = &(board->cells[i][j]);
-
-            /* calculate the threat rating from the number of nearby threats
-             * and the number of nearby opportunities. */
-            cell->threat_rating = (threat_rating_t) (
-                powf((float) cell->threat_benefit[THREAT], THREAT_EXPONENT) +
-                powf((float) cell->threat_benefit[BENEFIT], BENEFIT_EXPONENT)
-            );
-        }
-    }
 }
 
 /**
@@ -115,29 +115,11 @@ void patch_threat_ratings(board_t *board,
     int rdiag;
     const int bounds = WINNING_SEQ_LENGTH - 1;
 
-    /* re-use or allocate a patch */
-    /*
-    if(NULL == patch) {
-        patch = malloc(sizeof(threat_patch_t));
-        if(NULL == patch) {
-            DIE("Unable to allocate new threat patch.\n");
-        }
-    }*/
-
-    /* configure the patch */
-    /*
-    patch->board = board;
-    patch->player_id = player_id;
-    patch->threat_benefit[THREAT] = cell->threat_benefit[THREAT];
-    patch->threat_benefit[BENEFIT] = cell->threat_benefit[BENEFIT];
-    */
-
     /* change the cell */
-    cell->threat_benefit[THREAT] = DEFAULT_THREAT;
-    cell->threat_benefit[BENEFIT] = DEFAULT_BENEFIT;
+    cell->threat_rating = DEFAULT_THREAT;
 
     /* configure the cell sequence */
-    init_bcs(board, &seq, player_id);
+    init_bcs(board, &seq);
 
     /* figure out where in the playing board this cell is */
     col = (int) ((cell - cells) % BOARD_LENGTH);
@@ -146,35 +128,29 @@ void patch_threat_ratings(board_t *board,
     ldiag = col >= row ? BOARD_LENGTH - (col - row) : BOARD_LENGTH + (row - col);
     rdiag = row >= col ? (row - col) : (col - row);
 
-    /*printf("row:%d col:%d ldiag:%d rdiag:%d \n", row, col, ldiag, rdiag);*/
-
-    /*
-    printf("sequence: ");
-    for(i = 1; i <= seq.len; ++i) {
-        printf("%d ", seq.cells[i]->is_nothing ? 0 : (int) seq.cells[i]->player_id);
-    }
-    printf("\n");
-     */
-
     /* apply the threat levels to the sequences */
     if(generate_nth_bcs(&seq, 0, D_LEFT_RIGHT)) {
-        update_threats_with_seq(board, &seq);
+        clear_threats_with_seq(&seq, cell);
+        update_threats_with_seq(board, &seq, player_id);
     }
 
     if(generate_nth_bcs(&seq, col, D_TOP_BOTTOM)) {
-        update_threats_with_seq(board, &seq);
+        clear_threats_with_seq(&seq, cell);
+        update_threats_with_seq(board, &seq, player_id);
     }
 
     if(ldiag >= BOARD_LENGTH
     && ldiag < (BOARD_LENGTH * 2 - WINNING_SEQ_LENGTH)
     && generate_nth_bcs(&seq, ldiag - WINNING_SEQ_LENGTH, D_LEFT_DIAG)) {
-        update_threats_with_seq(board, &seq);
+        clear_threats_with_seq(&seq, cell);
+        update_threats_with_seq(board, &seq, player_id);
     }
 
     if(rdiag >= BOARD_LENGTH
     && rdiag < (BOARD_LENGTH * 2 - WINNING_SEQ_LENGTH)
     && generate_nth_bcs(&seq, rdiag - WINNING_SEQ_LENGTH, D_RIGHT_DIAG)) {
-        update_threats_with_seq(board, &seq);
+        clear_threats_with_seq(&seq, cell);
+        update_threats_with_seq(board, &seq, player_id);
     }
 
     /* update the threat scores in the bounding box */

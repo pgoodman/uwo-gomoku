@@ -33,7 +33,9 @@ typedef struct {
 } threat_patch_t;
 #endif
 
-void update_threats_with_seq(board_t *board, board_cell_seq_t *seq);
+void update_threats_with_seq(board_t *board,
+                             board_cell_seq_t *seq,
+                             player_t player_id);
 void compute_threat_ratings(board_t *board,
                             const int top,
                             const int right,

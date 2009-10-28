@@ -23,10 +23,6 @@ int read_board(board_t *board) {
     int i; /* row */
     int j; /* column */
     int k = 0; /* buffer index */
-    /*int top = BOARD_LENGTH;
-    int left = BOARD_LENGTH;
-    int bottom = 0;
-    int right = 0;*/
     char buffer[BOARD_BUFFER_SIZE]; /* text buffer for file contents */
     char c; /* current character in the buffer */
     board_cell_t *cell; /* current cell in the board */
@@ -59,8 +55,6 @@ int read_board(board_t *board) {
             }
 
             /* threat ratings */
-            cell->threat_benefit[THREAT] = DEFAULT_THREAT;
-            cell->threat_benefit[BENEFIT] = DEFAULT_BENEFIT;
             cell->threat_rating = 0;
 
             /* empty cell */
@@ -71,12 +65,6 @@ int read_board(board_t *board) {
             /* played cell */
             } else {
                 cell->is_nothing = 0;
-
-                /* find the exact bounding box of the elements */
-                /*left = MIN(j, left);
-                right = MAX(j, right);
-                top = MAX(i, top);
-                bottom = MIN(i, bottom);*/
 
                 /* bring in the other elements */
                 if('1' == c) {
@@ -89,12 +77,6 @@ int read_board(board_t *board) {
             ++j;
         }
     }
-
-    /* find the extended bounding box */
-    /*board->left = MIN(left, MAX(0, left - SEARCH_BOUNDS));
-    board->top = MIN(top, MAX(0, top - SEARCH_BOUNDS));
-    board->right = MAX(right, MIN(BOARD_LENGTH, right + SEARCH_BOUNDS));
-    board->top = MAX(top, MIN(BOARD_LENGTH, top + SEARCH_BOUNDS));*/
 
     return 1;
 }

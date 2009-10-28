@@ -26,10 +26,10 @@
 #define SEARCH_BOUNDS 1 /* extends the bounding box to look for successors */
 #define THREAT 1
 #define BENEFIT 1
-#define THREAT_EXPONENT 3.0
-#define BENEFIT_EXPONENT 2.0
-#define DEFAULT_THREAT 1
-#define DEFAULT_BENEFIT 0
+#define THREAT_BASE 4
+#define BENEFIT_BASE 4
+#define DEFAULT_THREAT 0
+#define LOCAL_SPACE 2
 
 /* computed macros */
 #define BOARD_NUM_CELLS BOARD_LENGTH * BOARD_LENGTH
@@ -53,6 +53,6 @@ typedef enum {
     PLAYER_2 = 2
 } player_t;
 
-typedef short threat_rating_t;
+typedef int threat_rating_t;
 
 #endif /* COMMON_H_ */
