@@ -8,8 +8,7 @@ CFLAGS = -O2 -g -pedantic -pedantic-errors -Wall -Werror -c -ansi
 OBJ_FILE = fiveinarow
 
 INCLUDES = 
-OBJS = ./main.o ./context.o ./board.o  ./board-cell-seq.o
-EXT_OBJS = ./ahocorasick.o
+OBJS = ./main.o ./context.o ./board.o  ./board-cell-seq.o ./threat.o
 
 all: ${OBJ_FILE}
 
@@ -21,12 +20,7 @@ realclean: clean
 
 # compile the project
 ${OBJ_FILE}: ${OBJS} ${EXT_OBJS}
-	${CC} ${INCLUDES} -o $@ ${OBJS} ${EXT_OBJS}
-
+	${CC} ${INCLUDES} -o $@ ${OBJS}
 # base objects
 %.o: ../%.c
-	${CC} ${INCLUDES} $^ $(CFLAGS)
-
-# aho-corasick algorithm
-%.o: ../ahocorasick/%.c
 	${CC} ${INCLUDES} $^ $(CFLAGS)

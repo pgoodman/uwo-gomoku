@@ -48,18 +48,33 @@ static void update_bcs(board_cell_seq_t *seq) {
 /**
  * Initialize a board sequence generator.
  */
-void init_bcs(board_t *board, board_cell_seq_t *seq) {
+void init_bcs(board_t *board, board_cell_seq_t *seq, const player_t player_id) {
     DYNAMIC_ASSERT(NULL != board);
     DYNAMIC_ASSERT(NULL != seq);
 
     seq->board = board;
     seq->id = -1;
     seq->dir = D_LEFT_RIGHT;
+
+    /* make the wall, this is a dummy cell */
+    seq->wall.player_id = player_id;
+    seq->wall.is_nothing = 0;
+    seq->wall.threat_benefit[THREAT] = DEFAULT_THREAT;
+    seq->wall.threat_benefit[BENEFIT] = DEFAULT_BENEFIT;
+    seq->wall.threat_rating = 0;
+    seq->cells[0] = &(seq->wall);
 }
 
+/**
+ * Change the wall of a board cell sequence.
+ */
+void change_bcs_player(board_cell_seq_t *seq, const player_t player_id) {
+    DYNAMIC_ASSERT(NULL != seq);
+    seq->wall.player_id = player_id;
+}
 
 /**
- * Generate a single board string. A board sequence is one which has:
+ * Generate a single board sequence. A board sequence is one which has:
  *
  *   i)   at least one unused board position;
  *   ii)  at least one used board positions
@@ -67,20 +82,23 @@ void init_bcs(board_t *board, board_cell_seq_t *seq) {
  *   iv)  has length at least WINNING_SEQUENCE_LENGTH and at most BOARD_LENGTH
  *
  * Each board string has as zero representing an empty cell, a 1 representing
- * a cell played by player 1, and a 2 representing a cell played by player 2.
- * There are no spaces between the cells (i.e. characters) and each generated
- * string is null-terminated.
+ * a the current player, and a 2 representing the opponent player. There are
+ * no spaces between the cells (i.e. characters) and each generated string is
+ * null-terminated.
+ *
+ * Each board string is bounded on either side by a 1, representing our own
+ * chip.
  */
 int generate_bcs(board_cell_seq_t *seq) {
 
     int empty_board_pos_found;
     int non_empty_board_pos_found;
-    int i;
-    int j;
-    int i_incr;
-    int j_incr;
-    int k;
-    int offset;
+    int i; /* row */
+    int j; /* column */
+    int i_incr; /* how much to increment i by at each iteration */
+    int j_incr; /* how much to increment j by at each iteration */
+    int k; /* the index into the current sequence */
+    int offset; /* figure out where to initialize i and j for diagonals */
     board_cell_t *cell;
 
     DYNAMIC_ASSERT(NULL != seq);
@@ -89,10 +107,11 @@ int generate_bcs(board_cell_seq_t *seq) {
         /* advance to the next sequence */
         update_bcs(seq);
 
-        i = j = i_incr = j_incr = k = 0;
+        i = j = i_incr = j_incr = 0;
+        k = 1;
         empty_board_pos_found = 0;
         non_empty_board_pos_found = 0;
-        offset = WINNING_SEQUENCE_LENGTH + seq->id;
+        offset = WINNING_SEQ_LENGTH + seq->id;
         seq->len = 0;
 
         /* configurations for how to loop over the game board */
@@ -131,8 +150,9 @@ int generate_bcs(board_cell_seq_t *seq) {
                 return 0;
         }
 
-        /* cut off any final diagonals that are too short */
-        if(seq->dir > 1 && i > (BOARD_LENGTH - WINNING_SEQUENCE_LENGTH)) {
+        /* cut off any final diagonals that are too short. force a change of
+         * direction or termination of the generator. */
+        if(seq->dir > 1 && i > (BOARD_LENGTH - WINNING_SEQ_LENGTH)) {
             seq->id = BOARD_LENGTH * 2;
             continue;
         }
@@ -142,7 +162,7 @@ int generate_bcs(board_cell_seq_t *seq) {
 
             cell = &(seq->board->cells[i][j]);
 
-            /* figure out if we should accept this sequence */
+            /* fill up the string and also keep track of what we've seen. */
             if(cell->is_nothing) {
                 empty_board_pos_found = 1;
             } else {
@@ -157,6 +177,9 @@ int generate_bcs(board_cell_seq_t *seq) {
         }
 
     } while(!(empty_board_pos_found && non_empty_board_pos_found));
+
+    /* move the trailing wall */
+    seq->cells[seq->len + 1] = &(seq->wall);
 
     return 1;
 }

@@ -15,11 +15,11 @@
 #include <limits.h>
 #include <unistd.h>
 
-typedef void (context_func_t)(void *);
+typedef void (timed_func_t)(void *);
 
 void yield(void);
 
-void timed_computation(context_func_t *func,
+void timed_computation(timed_func_t *func,
                        void *computed_data,
                        unsigned int num_seconds);
 

@@ -17,6 +17,8 @@
 /* board cell type */
 typedef struct {
     player_t player_id;
+    threat_rating_t threat_benefit[2];
+    threat_rating_t threat_rating;
     unsigned int is_nothing:1;
 } board_cell_t;
 
@@ -24,10 +26,10 @@ typedef struct {
 typedef struct {
     board_cell_t cells[BOARD_LENGTH][BOARD_LENGTH];
     int num_empty_cells;
-    int left; /* bounding box */
+    /*int left;
     int top;
     int right;
-    int bottom;
+    int bottom;*/
 } board_t;
 
 int read_board(board_t *);
