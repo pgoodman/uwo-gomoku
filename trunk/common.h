@@ -24,7 +24,7 @@
 
 /* other */
 #define SEARCH_BOUNDS 1 /* extends the bounding box to look for successors */
-#define THREAT 0
+#define THREAT 1
 #define BENEFIT 1
 #define THREAT_EXPONENT 3.0
 #define BENEFIT_EXPONENT 2.0

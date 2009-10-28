@@ -9,13 +9,16 @@
 #ifndef THREAT_H_
 #define THREAT_H_
 
+#include <stdlib.h>
 #include <math.h>
+
 #include "common.h"
 #include "board.h"
 #include "board-cell-seq.h"
 
 /* type representing the changes made to the game board for any one choice of
  * move. */
+#if 0
 typedef struct {
 
     struct {
@@ -28,8 +31,16 @@ typedef struct {
     threat_rating_t threat_benefit[2];
 
 } threat_patch_t;
+#endif
 
 void update_threats_with_seq(board_t *board, board_cell_seq_t *seq);
-void compute_threat_ratings(board_t *board);
+void compute_threat_ratings(board_t *board,
+                            const int top,
+                            const int right,
+                            const int bottom,
+                            const int left);
+void patch_threat_ratings(board_t *board,
+                          board_cell_t *cell,
+                          const player_t player_id);
 
 #endif /* THREAT_H_ */
