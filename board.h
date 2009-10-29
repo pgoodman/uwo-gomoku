@@ -20,7 +20,7 @@
 /* board cell type */
 typedef struct {
     player_t player_id;
-    threat_rating_t threat_rating;
+    threat_rating_t importance;
 } board_cell_t;
 
 /* board type */

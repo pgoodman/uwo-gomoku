@@ -62,7 +62,7 @@ int read_board(board_t *board) {
                 continue;
             }
 
-            cell->threat_rating = (
+            cell->importance = (
                 (K - (pow(i - BOARD_CENTER, 2) + pow(j - BOARD_CENTER, 2))) / 4
             );
 

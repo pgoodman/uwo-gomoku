@@ -29,15 +29,13 @@ typedef struct {
 } threat_space_patch_t;
 #endif
 
-void calculate_threats(board_t *board, const player_t player_id);
+void calculate_threats(board_t *board);
 
 void add_threat(board_t *board,
                 board_cell_t *cell,
-                const player_t player_id,
                 const player_t add_player_id);
 
 void remove_threat(board_t *board,
-                   board_cell_t *cell,
-                   const player_t player_id);
+                   board_cell_t *cell);
 
 #endif /* THREAT_H_ */

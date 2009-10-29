@@ -58,6 +58,6 @@ typedef enum {
     PLAYER_2
 } player_t;
 
-typedef int threat_rating_t;
+typedef short threat_rating_t;
 
 #endif /* COMMON_H_ */

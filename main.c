@@ -8,7 +8,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 
 #include "common.h"
 #include "context.h"
@@ -19,10 +18,6 @@
 /*#include "game.h"*/
 
 #if 1
-
-
-
-
 
 static void print_board_and_threat(board_t *board, player_t player_id) {
     int i;
@@ -56,7 +51,7 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
             cell = &(board->cells[i][j]);
             if(cell->player_id == NO_PLAYER) {
-                printf("%5d", cell->threat_rating);
+                printf("%5d", cell->importance);
             } else if(cell->player_id != player_id) {
                 printf("    X");
             } else {
@@ -75,7 +70,6 @@ int main(const int argc, const char *argv[]) {
     board_t board;
     board_cell_t *cell;
     player_t player_id;
-    time_t duration;
     game_status_t status;
 
     /* make sure the board length is legal */
@@ -105,32 +99,14 @@ int main(const int argc, const char *argv[]) {
         cell->player_id = player_id;
 
     /* search for a move to make. */
-    } else {
+    } else if(0 < board.num_empty_cells) {
 
-        /* game board is empty */
-        if(!board.num_empty_cells) {
-            PRINT("Game is over.\n");
-            return 1;
-        }
+        calculate_threats(&board);
 
-        calculate_threats(&board, player_id);
-        print_board_and_threat(&board, player_id);
-
-        duration = time(NULL);
         cell = &(board.cells[BOARD_CENTER][BOARD_CENTER]);
-        add_threat(
-            &board,
-            cell,
-            player_id,
-            OPPONENT(player_id)
-        );
 
-        remove_threat(
-            &board,
-            cell,
-            player_id
-        );
-        printf("duration: %d \n\n", (int) (time(NULL) - duration));
+        add_threat(&board, cell, OPPONENT(player_id));
+        remove_threat(&board, cell);
 
         print_board_and_threat(&board, player_id);
     }
