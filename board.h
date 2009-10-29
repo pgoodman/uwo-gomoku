@@ -12,13 +12,13 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <math.h>
 #include "common.h"
 
 /* board cell type */
 typedef struct {
     player_t player_id;
     threat_rating_t threat_rating;
-    unsigned int is_nothing:1;
 } board_cell_t;
 
 /* board type */
