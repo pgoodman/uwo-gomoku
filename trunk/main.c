@@ -14,14 +14,21 @@
 #include "context.h"
 #include "board.h"
 #include "threat.h"
+#include "status.h"
+
+/*#include "game.h"*/
 
 #if 1
+
+
+
+
 
 static void print_board_and_threat(board_t *board, player_t player_id) {
     int i;
     int j;
     board_cell_t *cell;
-
+#if 0
     printf("Board: \n");
     for(i = 0; i < BOARD_LENGTH; ++i) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
@@ -34,7 +41,7 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
         }
         printf("\n");
     }
-
+#endif
     printf("\nThreats: \n    ");
     for(i = 0; i < BOARD_LENGTH; ++i) {
         printf("%5d", i);
@@ -60,7 +67,6 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
     }
 }
 
-
 /**
  * Do simple
  */
@@ -68,8 +74,9 @@ int main(const int argc, const char *argv[]) {
 
     board_t board;
     board_cell_t *cell;
-    /*board_cell_seq_t seq;*/
     player_t player_id;
+    time_t duration;
+    game_status_t status;
 
     /* make sure the board length is legal */
     STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
@@ -106,31 +113,38 @@ int main(const int argc, const char *argv[]) {
             return 1;
         }
 
-        /* generate the threat matrix for the current board configuration if
-         * it were the current player's turn and also if it were the other
-         * player's turn. */
         calculate_threats(&board, player_id);
         print_board_and_threat(&board, player_id);
 
-        add_threat(&board, &(board.cells[1][1]), player_id, player_id);
-        add_threat(&board, &(board.cells[14][0]), player_id, player_id);
-        add_threat(&board, &(board.cells[2][12]), player_id, player_id);
-        add_threat(&board, &(board.cells[11][11]), player_id, player_id);
+        duration = time(NULL);
+        cell = &(board.cells[BOARD_CENTER][BOARD_CENTER]);
+        add_threat(
+            &board,
+            cell,
+            player_id,
+            OPPONENT(player_id)
+        );
 
-        print_board_and_threat(&board, player_id);
-
-        remove_threat(&board, &(board.cells[1][1]), player_id);
-        remove_threat(&board, &(board.cells[14][0]), player_id);
-        remove_threat(&board, &(board.cells[2][12]), player_id);
-        remove_threat(&board, &(board.cells[11][11]), player_id);
+        remove_threat(
+            &board,
+            cell,
+            player_id
+        );
+        printf("duration: %d \n\n", (int) (time(NULL) - duration));
 
         print_board_and_threat(&board, player_id);
     }
 
+    /* update the text file to notify that the game is over */
+    status = game_status(&board, player_id);
+    if(GAME_WON == status || GAME_DRAW == status) {
+
+    }
+
     /* output the new board to the file */
-    /*if(!put_board(&board)) {
+    if(!put_board(&board)) {
         DIE("Unable to output the board.\n");
-    }*/
+    }
 
     return 1;
 }

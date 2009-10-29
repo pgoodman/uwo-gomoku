@@ -17,7 +17,7 @@ static void update_cell_threats(board_t *board,
                                 const int j_init,
                                 const int i_incr,
                                 const int j_incr,
-                                const int importance_mult) {
+                                const int imp_multiplier) {
     threat_rating_t threat = 0;
     threat_rating_t benefit = 0;
     threat_rating_t importance = 0;
@@ -62,7 +62,7 @@ static void update_cell_threats(board_t *board,
     /* calculate threat value */
     if(!threat) { importance += pow(BENEFIT_BASE, benefit); }
     if(!benefit) { importance += pow(THREAT_BASE, threat); }
-    importance *= importance_mult;
+    importance *= imp_multiplier;
 
     /* increment the threat level of all cells in the local space */
     if(threat || benefit) {
@@ -85,12 +85,12 @@ static void update_local_space(board_t *board,
                                const player_t player_id,
                                const int row,
                                const int col,
-                               const int mult) {
+                               const int imp_multiplier) {
 
-    update_cell_threats(board, player_id, row, col, 0, 1, mult);
-    update_cell_threats(board, player_id, row, col, 1, 0, mult);
-    update_cell_threats(board, player_id, row, col, 1, 1, mult);
-    update_cell_threats(board, player_id, row, col, 1, -1, mult);
+    update_cell_threats(board, player_id, row, col, 0, 1, imp_multiplier);
+    update_cell_threats(board, player_id, row, col, 1, 0, imp_multiplier);
+    update_cell_threats(board, player_id, row, col, 1, 1, imp_multiplier);
+    update_cell_threats(board, player_id, row, col, 1, -1, imp_multiplier);
 }
 
 /**
@@ -115,23 +115,35 @@ void calculate_threats(board_t *board, const player_t player_id) {
 static void recalculate_local_space(board_t *board,
                                     board_cell_t *cell,
                                     const player_t player_id,
-                                    const int importance_mult) {
+                                    const int imp_multiplier) {
 
     const board_cell_t *cells = &(board->cells[0][0]);
     const int col = (int) ((cell - cells) % BOARD_LENGTH);
     const int row = (int) ((cell - cells) - col) / BOARD_LENGTH;
+#if 0
     const int i_max = MIN(BOARD_LENGTH - 1, row + LOCAL_SPACE);
     const int j_max = MIN(BOARD_LENGTH - 1, col + LOCAL_SPACE);
+    const int i_min = MAX(0, row - LOCAL_SPACE);
     const int j_min = MAX(0, col - LOCAL_SPACE);
-    int i = MAX(0, row - LOCAL_SPACE);
+    threat_cell_patch_t *cell_patch = &(patch->changes[0]);
+
+    int i;
     int j;
 
-    /* update the threat scores of each threat space that contains the cell */
-    for(; i <= i_max; ++i) {
-        for(j = j_min; j <= j_max; ++j) {
-            update_local_space(board, player_id, i, j, importance_mult);
+    /* make the threat patch */
+    for(i = i_min; i <= i_max ; ++i) {
+        for(j = j_min; j <= j_max; ++j, ++cell_patch) {
+            cell = &(board->cells[i][j]);
+            cell_patch->cell = cell;
+            cell_patch->threat_rating = cell->threat_rating;
         }
     }
+
+    /* add trailing null */
+    cell_patch->cell = NULL;
+#endif
+    /* update the threat scores of each threat space that contains the cell */
+    update_local_space(board, player_id, row, col, imp_multiplier);
 }
 
 /**
@@ -149,10 +161,19 @@ void add_threat(board_t *board,
 /**
  * Remove a position from the board and update the threat scores.
  */
+#if 0
+void remove_threat(threat_space_patch_t *patch) {
+    threat_cell_patch_t *cell_patch = &(patch->changes[0]);
+    while(NULL != cell_patch->cell) {
+        cell_patch->cell->threat_rating = cell_patch->threat_rating;
+        ++cell_patch;
+    }
+    patch->cell->player_id = NO_PLAYER;
+}
+#endif
 void remove_threat(board_t *board,
                    board_cell_t *cell,
                    const player_t player_id) {
-
     recalculate_local_space(board, cell, player_id, -1);
     cell->player_id = NO_PLAYER;
 }

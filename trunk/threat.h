@@ -14,7 +14,20 @@
 
 #include "common.h"
 #include "board.h"
-#include "board-cell-seq.h"
+
+#if 0
+#define NUM_PATCH_CELLS ((LOCAL_SPACE * 4) * (LOCAL_SPACE + 1) + 2) /* + 1 trailing dummy */
+
+typedef struct {
+    int threat_rating;
+    board_cell_t *cell;
+} threat_cell_patch_t;
+
+typedef struct {
+    threat_cell_patch_t changes[NUM_PATCH_CELLS];
+    board_cell_t *cell;
+} threat_space_patch_t;
+#endif
 
 void calculate_threats(board_t *board, const player_t player_id);
 
