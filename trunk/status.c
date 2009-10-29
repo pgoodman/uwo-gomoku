@@ -1,5 +1,5 @@
 /*
- * status
+ * status.c
  *
  *  Created on: Oct 29, 2009
  *      Author: petergoodman
@@ -37,14 +37,14 @@ static int next_state(const int prev_state, const int i, const int j) {
         PLAYER_CASE(2, 3, 6, 0)
         PLAYER_CASE(3, 4, 6, 0)
         PLAYER_CASE(4, 5, 6, 0)
-        PLAYER_CASE(5, 5, 5, 5)
+        PLAYER_CASE(5, 5, 5, 5) /* win */
 
         /* min player */
         PLAYER_CASE(6, 1, 7, 0)
         PLAYER_CASE(7, 1, 8, 0)
         PLAYER_CASE(8, 1, 9, 0)
         PLAYER_CASE(9, 1, 10, 0)
-        PLAYER_CASE(10, 10, 10, 10)
+        PLAYER_CASE(10, 10, 10, 10) /* loss */
     }
 
     return 0;
@@ -66,6 +66,7 @@ static void it_seq(int i_start,
     int state = 0;
     const int len = BOARD_LENGTH;
 
+    /* game has been won or lost */
     if(-1 != terminal_state_seen) {
         return;
     }
@@ -95,8 +96,9 @@ static void it_seq(int i_start,
  */
 game_status_t game_status(board_t *board, const player_t player_id) {
 
+    /* information related to sequencing diagonals */
     const int diag_big_max = (BOARD_NUM_CELLS / 2) - BOARD_LENGTH;
-    const int diag_small_max = (BOARD_NUM_CELLS / 2) - BOARD_LENGTH - 2;
+    const int diag_small_max = diag_big_max - 2;
     const int diag_off = (BOARD_LENGTH - WINNING_SEQ_LENGTH);
 
     /* initialize the global vars */
