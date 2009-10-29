@@ -25,8 +25,8 @@ int read_board(board_t *board) {
     int k = 0; /* buffer index */
     char buffer[BOARD_BUFFER_SIZE]; /* text buffer for file contents */
     char c; /* current character in the buffer */
+    const int K = pow(BOARD_CENTER, 2) * 2;
     board_cell_t *cell; /* current cell in the board */
-
     DYNAMIC_ASSERT(NULL != board);
 
     /* open the file */
@@ -49,30 +49,22 @@ int read_board(board_t *board) {
             c = buffer[k];
             cell = &(board->cells[i][j]);
 
-            /* ignore non-number values */
-            if('0' != c && '1' != c && '2' != c) {
+            if('0' == c) {
+                cell->player_id = NO_PLAYER;
+                ++board->num_empty_cells;
+            } else if('1' == c) {
+                cell->player_id = PLAYER_1;
+            } else if('2' == c) {
+                cell->player_id = PLAYER_2;
+
+            /* non-cell */
+            } else {
                 continue;
             }
 
-            /* threat ratings */
-            cell->threat_rating = 0;
-
-            /* empty cell */
-            if('0' == c) {
-                cell->is_nothing = 1;
-                ++board->num_empty_cells;
-
-            /* played cell */
-            } else {
-                cell->is_nothing = 0;
-
-                /* bring in the other elements */
-                if('1' == c) {
-                    cell->player_id = PLAYER_1;
-                } else {
-                    cell->player_id = PLAYER_2;
-                }
-            }
+            cell->threat_rating = (
+                (K - (pow(i - BOARD_CENTER, 2) + pow(j - BOARD_CENTER, 2))) / 4
+            );
 
             ++j;
         }
@@ -102,7 +94,7 @@ int put_board(board_t *board) {
             cell = &(board->cells[i][j]);
 
             /* type safety is fun :D */
-            if(cell->is_nothing) {
+            if(cell->player_id == NO_PLAYER) {
                 buffer[++k] = '0';
             } else if(cell->player_id == PLAYER_1) {
                 buffer[++k] = '1';

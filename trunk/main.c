@@ -26,7 +26,7 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
     for(i = 0; i < BOARD_LENGTH; ++i) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
             cell = &(board->cells[i][j]);
-            if(cell->is_nothing) {
+            if(cell->player_id == NO_PLAYER) {
                 printf("0 ");
             } else {
                 printf("%d ", (int) cell->player_id);
@@ -34,50 +34,21 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
         }
         printf("\n");
     }
-/*
-    printf("\nThreats: \n");
-    for(i = 0; i < BOARD_LENGTH; ++i) {
-        for(j = 0; j < BOARD_LENGTH; ++j) {
-            cell = &(board->cells[i][j]);
-            if(cell->threat_rating == 0) {
-                if(cell->is_nothing == 1) {
-                    printf("0 ");
-                } else if(cell->player_id != player_id) {
-                    printf("X ");
-                } else {
-                    printf("  ");
-                }
-            } else {
-                printf("%d ", cell->threat_benefit[THREAT]);
-            }
-        }
-        printf("\n");
-    }
 
-    printf("\nBenefits: \n");
+    printf("\nThreats: \n    ");
     for(i = 0; i < BOARD_LENGTH; ++i) {
-        for(j = 0; j < BOARD_LENGTH; ++j) {
-            cell = &(board->cells[i][j]);
-            if(cell->threat_rating == 0) {
-                if(cell->is_nothing == 1) {
-                    printf("0 ");
-                } else if(cell->player_id != player_id) {
-                    printf("X ");
-                } else {
-                    printf("  ");
-                }
-            } else {
-                printf("%d ", cell->threat_benefit[BENEFIT]);
-            }
-        }
-        printf("\n");
+        printf("%5d", i);
     }
-*/
-    printf("\nCombined: \n");
+    printf("\n   +");
     for(i = 0; i < BOARD_LENGTH; ++i) {
+        printf("-----");
+    }
+    printf("\n");
+    for(i = 0; i < BOARD_LENGTH; ++i) {
+        printf("%2d |", i);
         for(j = 0; j < BOARD_LENGTH; ++j) {
             cell = &(board->cells[i][j]);
-            if(cell->is_nothing == 1) {
+            if(cell->player_id == NO_PLAYER) {
                 printf("%5d", cell->threat_rating);
             } else if(cell->player_id != player_id) {
                 printf("    X");
@@ -97,7 +68,7 @@ int main(const int argc, const char *argv[]) {
 
     board_t board;
     board_cell_t *cell;
-    board_cell_seq_t seq;
+    /*board_cell_seq_t seq;*/
     player_t player_id;
 
     /* make sure the board length is legal */
@@ -125,7 +96,6 @@ int main(const int argc, const char *argv[]) {
     if(board.num_empty_cells == BOARD_NUM_CELLS) {
         cell = &(board.cells[BOARD_CENTER][BOARD_CENTER]);
         cell->player_id = player_id;
-        cell->is_nothing = 0;
 
     /* search for a move to make. */
     } else {
@@ -139,24 +109,22 @@ int main(const int argc, const char *argv[]) {
         /* generate the threat matrix for the current board configuration if
          * it were the current player's turn and also if it were the other
          * player's turn. */
-        init_bcs(&board, &seq);
-        while(generate_bcs(&seq)) {
-            update_threats_with_seq(&board, &seq, player_id);
-        }
-        /*compute_threat_ratings(&board, 0, BOARD_LENGTH, BOARD_LENGTH, 0);*/
+        calculate_threats(&board, player_id);
+        print_board_and_threat(&board, player_id);
+
+        add_threat(&board, &(board.cells[1][1]), player_id, player_id);
+        add_threat(&board, &(board.cells[14][0]), player_id, player_id);
+        add_threat(&board, &(board.cells[2][12]), player_id, player_id);
+        add_threat(&board, &(board.cells[11][11]), player_id, player_id);
 
         print_board_and_threat(&board, player_id);
 
-        /*
-        printf("\n\nAdding move and patching....\n\n");
+        remove_threat(&board, &(board.cells[1][1]), player_id);
+        remove_threat(&board, &(board.cells[14][0]), player_id);
+        remove_threat(&board, &(board.cells[2][12]), player_id);
+        remove_threat(&board, &(board.cells[11][11]), player_id);
 
-        cell = &(board.cells[0][0]);
-        cell->is_nothing = 0;
-        cell->player_id = PLAYER_1;
-
-        patch_threat_ratings(&board, cell, player_id);
         print_board_and_threat(&board, player_id);
-        */
     }
 
     /* output the new board to the file */

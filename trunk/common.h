@@ -30,6 +30,7 @@
 #define BENEFIT_BASE 4
 #define DEFAULT_THREAT 0
 #define LOCAL_SPACE 2
+#define CELL_WEIGHT_INCREMENT 1
 
 /* computed macros */
 #define BOARD_NUM_CELLS BOARD_LENGTH * BOARD_LENGTH
@@ -49,8 +50,9 @@
 
 /* types */
 typedef enum {
-    PLAYER_1 = 1,
-    PLAYER_2 = 2
+    NO_PLAYER,
+    PLAYER_1,
+    PLAYER_2
 } player_t;
 
 typedef int threat_rating_t;

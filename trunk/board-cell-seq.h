@@ -17,19 +17,14 @@
 #define D_LEFT_DIAG 2
 #define D_RIGHT_DIAG 3
 
-/* type representing a single character sequence of board cells and a
- * generator for the next sequence. */
+/* type representing a generator to generate all board cells in sequence in
+ * all directions. */
 typedef struct {
-    int id; /* the id of last string that was generated */
-    int dir; /* direction that we are generating strings from */
-    int len;
-    int only_one;
-    board_cell_t *cells[BOARD_LENGTH]; /* sequence of cells with dummies */
+    int prev; /* the id of previous cell generated */
     board_t *board; /* the board from which the strings come */
-} board_cell_seq_t;
+} board_cell_generator_t;
 
-void init_bcs(board_t *board, board_cell_seq_t *seq);
-int generate_bcs(board_cell_seq_t *seq);
-int generate_nth_bcs(board_cell_seq_t *seq, const int n, const int dir);
+void init_bcs(board_t *board, board_cell_generator_t *seq);
+int generate_bcs(board_cell_generator_t *seq, board_cell_t **cell);
 
 #endif /* BOARDCELLSEQ_H_ */

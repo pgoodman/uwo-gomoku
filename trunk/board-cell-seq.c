@@ -7,7 +7,7 @@
  */
 
 #include "board-cell-seq.h"
-
+#if 0
 /**
  * Update which sequence to get and the current sequence direction.
  */
@@ -43,15 +43,14 @@ static void update_bcs(board_cell_seq_t *seq) {
 /**
  * Initialize a board sequence generator.
  */
-void init_bcs(board_t *board, board_cell_seq_t *seq) {
+void init_bcg(board_t *board, board_cell_generator_t *seq) {
     DYNAMIC_ASSERT(NULL != board);
     DYNAMIC_ASSERT(NULL != seq);
 
     seq->board = board;
-    seq->id = -1;
-    seq->dir = D_LEFT_RIGHT;
-    seq->only_one = 0;
+    seq->curr = -1;
 }
+#endif
 
 /**
  * Generate a single board sequence. A board sequence is one which has:
@@ -69,6 +68,11 @@ void init_bcs(board_t *board, board_cell_seq_t *seq) {
  * Each board string is bounded on either side by a 1, representing our own
  * chip.
  */
+int generate_cell(board_cell_generator_t *gen, board_cell_t **cell) {
+
+}
+
+#if 0
 int generate_bcs(board_cell_seq_t *seq) {
 
     int empty_board_pos_found;
@@ -77,9 +81,7 @@ int generate_bcs(board_cell_seq_t *seq) {
     int j; /* column */
     int i_incr; /* how much to increment i by at each iteration */
     int j_incr; /* how much to increment j by at each iteration */
-    int k; /* the index into the current sequence */
     int offset; /* figure out where to initialize i and j for diagonals */
-    int has_sequence;
     board_cell_t *cell;
 
     DYNAMIC_ASSERT(NULL != seq);
@@ -89,11 +91,9 @@ int generate_bcs(board_cell_seq_t *seq) {
         update_bcs(seq);
 
         i = j = i_incr = j_incr = 0;
-        k = 0;
         empty_board_pos_found = 0;
         non_empty_board_pos_found = 0;
         offset = WINNING_SEQ_LENGTH + seq->id;
-        seq->len = 0;
 
         /* configurations for how to loop over the game board */
         switch(seq->dir) {
@@ -135,7 +135,6 @@ int generate_bcs(board_cell_seq_t *seq) {
          * direction or termination of the generator. */
         if(seq->dir > 1 && i > (BOARD_LENGTH - WINNING_SEQ_LENGTH)) {
             seq->id = BOARD_LENGTH * 2;
-            has_sequence = 0;
             continue;
         }
 
@@ -145,7 +144,7 @@ int generate_bcs(board_cell_seq_t *seq) {
             cell = &(seq->board->cells[i][j]);
 
             /* fill up the string and also keep track of what we've seen. */
-            if(cell->is_nothing) {
+            if(cell->player_id == NO_PLAYER) {
                 empty_board_pos_found = 1;
             } else {
                 non_empty_board_pos_found = 1;
@@ -164,7 +163,8 @@ int generate_bcs(board_cell_seq_t *seq) {
 
     return has_sequence;
 }
-
+#endif
+#if 0
 /**
  * Generate the nth board cell sequence and then reset the generator to its
  * previous state.
@@ -173,7 +173,7 @@ int generate_nth_bcs(board_cell_seq_t *seq, const int n, const int dir) {
 
     seq->dir = dir;
     seq->id = n - 1;
-    seq->only_one = 1;
 
     return generate_bcs(seq);
 }
+#endif
