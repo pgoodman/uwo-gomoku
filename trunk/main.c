@@ -14,16 +14,16 @@
 #include "board.h"
 #include "threat.h"
 #include "status.h"
+#include "ocs.h"
 
 /*#include "game.h"*/
 
-#if 1
-
+#if 0
 static void print_board_and_threat(board_t *board, player_t player_id) {
     int i;
     int j;
     board_cell_t *cell;
-#if 0
+
     printf("Board: \n");
     for(i = 0; i < BOARD_LENGTH; ++i) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
@@ -36,7 +36,7 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
         }
         printf("\n");
     }
-#endif
+#if 0
     printf("\nThreats: \n    ");
     for(i = 0; i < BOARD_LENGTH; ++i) {
         printf("%5d", i);
@@ -60,6 +60,58 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
         }
         printf("\n");
     }
+#endif
+}
+#endif
+int negascout(board_t *board,
+               const player_t player_id,
+               const int depth,
+               int alpha,
+               int beta) {
+
+    ordered_cell_seq_t seq;
+    board_cell_t *cell;
+    player_t opponent_id = OPPONENT(player_id);
+    int a;
+    int b;
+    int i;
+    int eval = fill_ocs(board, &seq);
+
+    if(!depth || !seq.len) {
+        return eval;
+    }
+
+    b = beta;
+
+    for(i = 0; i < seq.len; ++i) {
+
+        cell = seq.cells[i];
+        add_threat(board, cell, player_id);
+
+        a = -1 * negascout(board, opponent_id, depth - 1, -1 * b, -1 * alpha);
+
+        if(a > alpha) {
+            alpha = a;
+        }
+
+        if(alpha >= beta) {
+            return alpha;
+        }
+
+        /* re-search */
+        if(alpha >= b) {
+            alpha = -1 * negascout(board, opponent_id, depth - 1, -1 * beta, -1 * alpha);
+            if(alpha >= beta) {
+                return alpha;
+            }
+        }
+
+        b = alpha + 1;
+
+        remove_threat(board, cell);
+    }
+
+    return alpha;
 }
 
 /**
@@ -100,15 +152,24 @@ int main(const int argc, const char *argv[]) {
 
     /* search for a move to make. */
     } else if(0 < board.num_empty_cells) {
-
         calculate_threats(&board);
+
+
+        printf("negascout: %d\n", negascout(&board, player_id, 5, -9999, 9999));
+
+        /*
+
+        print_board_and_threat(&board, player_id);
 
         cell = &(board.cells[BOARD_CENTER][BOARD_CENTER]);
 
         add_threat(&board, cell, OPPONENT(player_id));
+
         remove_threat(&board, cell);
 
-        print_board_and_threat(&board, player_id);
+        print_board_and_threat(&board, player_id);*/
+
+
     }
 
     /* update the text file to notify that the game is over */
@@ -118,47 +179,9 @@ int main(const int argc, const char *argv[]) {
     }
 
     /* output the new board to the file */
-    if(!put_board(&board)) {
+    /*if(!put_board(&board)) {
         DIE("Unable to output the board.\n");
-    }
+    }*/
 
     return 1;
 }
-
-#else
-static int i = 0;
-
-static void search_for_move(void *context) {
-    int tested = 0;
-    while(++i) {
-        fprintf(stdout, "searching...\n");
-
-        /* test stopping short about half of the time. */
-        if(i > 9000 && !tested) {
-            tested = 1;
-            if(rand() & 1) {
-                yield();
-            }
-        }
-    }
-}
-
-static void use_best_found_move(void *context) {
-    fprintf(stdout, "alarm up, using move %d.\n", i);
-}
-
-int main(int argc, char *argv[]) {
-
-    srand((unsigned int) time(NULL));
-
-    timed_computation(
-        (context_func_t *) &search_for_move,
-        NULL,
-        MAX_SEARCH_TIME
-    );
-
-    use_best_found_move(NULL);
-
-    return 1;
-}
-#endif

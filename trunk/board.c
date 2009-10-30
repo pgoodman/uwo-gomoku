@@ -51,20 +51,32 @@ int read_board(board_t *board) {
 
             if('0' == c) {
                 cell->player_id = NO_PLAYER;
+
+                /* set the default importance/threat rating. this is a weighting
+                 * that trends toward the center of the board. This helps as a
+                 * tie breaker between same ranked cells and also it makes the
+                 * algorithm prefer cells closer to the center as there is less
+                 * space to make diagonal wins around the corners. */
+                cell->importance = (
+                    (K - (
+                        pow(i - BOARD_CENTER, 2) +
+                        pow(j - BOARD_CENTER, 2))
+                    ) / 4
+                );
                 ++board->num_empty_cells;
+
             } else if('1' == c) {
+                cell->importance = 0;
                 cell->player_id = PLAYER_1;
+
             } else if('2' == c) {
+                cell->importance = 0;
                 cell->player_id = PLAYER_2;
 
             /* non-cell */
             } else {
                 continue;
             }
-
-            cell->importance = (
-                (K - (pow(i - BOARD_CENTER, 2) + pow(j - BOARD_CENTER, 2))) / 4
-            );
 
             ++j;
         }

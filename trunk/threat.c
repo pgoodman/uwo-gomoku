@@ -50,11 +50,9 @@ static void update_cell_threats(board_t *board,
         if(cell->player_id == NO_PLAYER) {
             continue;
 
-        /* our own chip */
         } else if(cell->player_id == PLAYER_1) {
             benefit += 1;
 
-        /* opponent */
         } else {
             threat += 1;
         }
@@ -65,7 +63,8 @@ static void update_cell_threats(board_t *board,
     if(!benefit) { importance += imp_multiplier * pow(THREAT_BASE, threat); }
     importance *= imp_multiplier;
 
-    /* increment the threat level of all cells in the local space */
+    /* increment the threat level of all cells in this subsequence of the
+     * local threat space. */
     if(threat || benefit) {
         for(i = i_start, j = j_start;
             i >= i_min && i <= i_max && j >= j_min && j <= j_max;
@@ -80,13 +79,13 @@ static void update_cell_threats(board_t *board,
 }
 
 /**
- * Calculate the threat levels for each threat space anchored at a cell.
+ * Calculate increment the importance values on all cells within the local
+ * threat space of the cell positioned at (row, col) in the game board.
  */
 static void update_local_space(board_t *board,
                                const int row,
                                const int col,
                                const int imp_multiplier) {
-
     update_cell_threats(board, row, col, 0, 1, imp_multiplier);
     update_cell_threats(board, row, col, 1, 0, imp_multiplier);
     update_cell_threats(board, row, col, 1, 1, imp_multiplier);
