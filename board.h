@@ -15,7 +15,6 @@
 #include <math.h>
 
 #include "common.h"
-#include "minimax.h"
 
 /* board cell type */
 typedef struct {
