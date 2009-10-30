@@ -51,15 +51,15 @@ static int next_state(const int prev_state, const int i, const int j) {
 }
 
 /**
- * Iterate over sequences of cells.
+ * Iterate over sequences of sequences of cells.
  */
-static void it_seq(int i_start,
-                   int j_start,
-                   const int i_incr,
-                   const int j_incr,
-                   const int i_start_incr,
-                   const int j_start_incr,
-                   const int k_max) {
+static void it_seqs(int i_start,
+                    int j_start,
+                    const int i_incr,
+                    const int j_incr,
+                    const int i_start_incr,
+                    const int j_start_incr,
+                    const int k_max) {
     int i;
     int j;
     int k = 0;
@@ -76,6 +76,7 @@ static void it_seq(int i_start,
         for(i = i_start, j = j_start;
             i >= 0 && i < len && j >= 0 && j < len;
             i += i_incr, j += j_incr, ++k) {
+
             state = next_state(state, i, j);
         }
 
@@ -91,35 +92,7 @@ static void it_seq(int i_start,
     } while(k < k_max);
 }
 
-/**
- * Figure out the current status of the game after a given move.
- */
-game_status_t game_status(board_t *board, const player_t player_id) {
-
-    /* information related to sequencing diagonals */
-    const int diag_big_max = (BOARD_NUM_CELLS / 2) - BOARD_LENGTH;
-    const int diag_small_max = diag_big_max - 2;
-    const int diag_off = (BOARD_LENGTH - WINNING_SEQ_LENGTH);
-
-    /* initialize the global vars */
-    terminal_state_seen = -1;
-    max_player = player_id;
-    min_player = OPPONENT(player_id);
-    game_board = board;
-
-    /* horizontals and verticals */
-    it_seq(0, 0, 0, 1, 1, 0, BOARD_NUM_CELLS);
-    it_seq(0, 0, 1, 0, 0, 1, BOARD_NUM_CELLS);
-
-    /* left diagonals */
-    it_seq(0, diag_off, 1, 1, 0, -1, diag_big_max);
-    it_seq(diag_off, 0, 1, 1, -1, 0, diag_small_max);
-
-    /* right diagonals */
-    it_seq(0, WINNING_SEQ_LENGTH + 1, 1, -1, 0, 1, diag_big_max);
-    it_seq(BOARD_LENGTH - 1, diag_off, -1, 1, 0, -1, diag_small_max);
-
-    /* figure out the game status */
+static game_status_t status(board_t *board) {
     switch(terminal_state_seen) {
         case -1:
             if(!board->num_empty_cells) {
@@ -135,3 +108,36 @@ game_status_t game_status(board_t *board, const player_t player_id) {
 
     return GAME_PLAY;
 }
+
+/**
+ * Figure out the current status of the game after a given move.
+ */
+game_status_t global_status(board_t *board, const player_t player_id) {
+
+    /* information related to sequencing diagonals */
+    const int diag_big_max = (BOARD_NUM_CELLS / 2) - BOARD_LENGTH;
+    const int diag_small_max = diag_big_max - 2;
+    const int diag_off = (BOARD_LENGTH - WINNING_SEQ_LENGTH);
+
+    /* initialize the global vars */
+    terminal_state_seen = -1;
+    max_player = player_id;
+    min_player = OPPONENT(player_id);
+    game_board = board;
+
+    /* horizontals and verticals */
+    it_seqs(0, 0, 0, 1, 1, 0, BOARD_NUM_CELLS);
+    it_seqs(0, 0, 1, 0, 0, 1, BOARD_NUM_CELLS);
+
+    /* left diagonals */
+    it_seqs(0, diag_off, 1, 1, 0, -1, diag_big_max);
+    it_seqs(diag_off, 0, 1, 1, -1, 0, diag_small_max);
+
+    /* right diagonals */
+    it_seqs(0, WINNING_SEQ_LENGTH + 1, 1, -1, 0, 1, diag_big_max);
+    it_seqs(BOARD_LENGTH - 1, diag_off, -1, 1, 0, -1, diag_small_max);
+
+    /* figure out the game status */
+    return status(board);
+}
+

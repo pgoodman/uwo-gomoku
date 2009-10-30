@@ -16,6 +16,7 @@
 
 #include "common.h"
 
+
 /* board cell type */
 typedef struct {
     player_t player_id;
@@ -26,6 +27,7 @@ typedef struct {
 typedef struct {
     board_cell_t cells[BOARD_LENGTH][BOARD_LENGTH];
     int num_empty_cells;
+    game_status_t status;
 } board_t;
 
 int read_board(board_t *);
