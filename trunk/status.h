@@ -11,14 +11,10 @@
 
 #include "common.h"
 #include "board.h"
+#include "threat.h"
 
-typedef enum {
-    GAME_WON,
-    GAME_LOST,
-    GAME_DRAW,
-    GAME_PLAY
-} game_status_t;
+extern game_status_t local_status(board_t *board, board_cell_t *cell);
 
-game_status_t game_status(board_t *board, const player_t player_id);
+game_status_t global_status(board_t *board, const player_t player_id);
 
 #endif /* TERMINAL_H_ */

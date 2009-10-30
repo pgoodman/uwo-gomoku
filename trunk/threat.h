@@ -14,6 +14,7 @@
 
 #include "common.h"
 #include "board.h"
+#include "localspace.h"
 
 #if 0
 #define NUM_PATCH_CELLS ((LOCAL_SPACE * 4) * (LOCAL_SPACE + 1) + 2) /* + 1 trailing dummy */
@@ -29,13 +30,13 @@ typedef struct {
 } threat_space_patch_t;
 #endif
 
-void calculate_threats(board_t *board);
+void calculate_threats(local_space_t *local_space);
 
-void add_threat(board_t *board,
+void add_threat(local_space_t *local_space,
                 board_cell_t *cell,
                 const player_t add_player_id);
 
-void remove_threat(board_t *board,
+void remove_threat(local_space_t *local_space,
                    board_cell_t *cell);
 
 #endif /* THREAT_H_ */

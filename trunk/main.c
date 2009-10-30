@@ -13,17 +13,17 @@
 #include "context.h"
 #include "board.h"
 #include "threat.h"
-#include "status.h"
+#include "localspace.h"
 #include "ocs.h"
+#include "status.h"
 
 /*#include "game.h"*/
-
-#if 0
+#if 1
 static void print_board_and_threat(board_t *board, player_t player_id) {
     int i;
     int j;
     board_cell_t *cell;
-
+#if 0
     printf("Board: \n");
     for(i = 0; i < BOARD_LENGTH; ++i) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
@@ -36,7 +36,8 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
         }
         printf("\n");
     }
-#if 0
+#endif
+#if 1
     printf("\nThreats: \n    ");
     for(i = 0; i < BOARD_LENGTH; ++i) {
         printf("%5d", i);
@@ -63,6 +64,7 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
 #endif
 }
 #endif
+#if 0
 int negascout(board_t *board,
                const player_t player_id,
                const int depth,
@@ -113,7 +115,7 @@ int negascout(board_t *board,
 
     return alpha;
 }
-
+#endif
 /**
  * Do simple
  */
@@ -122,6 +124,7 @@ int main(const int argc, const char *argv[]) {
     board_t board;
     board_cell_t *cell;
     player_t player_id;
+    local_space_t local_space;
     game_status_t status;
 
     /* make sure the board length is legal */
@@ -152,30 +155,30 @@ int main(const int argc, const char *argv[]) {
 
     /* search for a move to make. */
     } else if(0 < board.num_empty_cells) {
-        calculate_threats(&board);
 
-
-        printf("negascout: %d\n", negascout(&board, player_id, 5, -9999, 9999));
-
-        /*
+        init_local_space(&board, &local_space);
+        calculate_threats(&local_space);
 
         print_board_and_threat(&board, player_id);
+        /*printf("negascout: %d\n", negascout(&board, player_id, 5, -9999, 9999));*/
 
-        cell = &(board.cells[BOARD_CENTER][BOARD_CENTER]);
+        cell = &(board.cells[10][10]);
 
-        add_threat(&board, cell, OPPONENT(player_id));
+        add_threat(&local_space, cell, OPPONENT(player_id));
 
-        remove_threat(&board, cell);
+        /*print_board_and_threat(&board, player_id); */
 
-        print_board_and_threat(&board, player_id);*/
+        remove_threat(&local_space, cell);
+
+        print_board_and_threat(&board, player_id);
 
 
     }
 
     /* update the text file to notify that the game is over */
-    status = game_status(&board, player_id);
+    status = global_status(&board, player_id);
     if(GAME_WON == status || GAME_DRAW == status) {
-
+        printf("\nEither a win or a draw!.\n");
     }
 
     /* output the new board to the file */
