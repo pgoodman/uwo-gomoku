@@ -57,20 +57,27 @@ int read_board(board_t *board) {
                  * tie breaker between same ranked cells and also it makes the
                  * algorithm prefer cells closer to the center as there is less
                  * space to make diagonal wins around the corners. */
-                cell->importance = (
+                cell->weight = (
                     (K - (
                         pow(i - BOARD_CENTER, 2) +
                         pow(j - BOARD_CENTER, 2))
                     ) / 4
                 );
+                cell->threat = 0;
+                cell->benefit = 0;
+
                 ++board->num_empty_cells;
 
             } else if('1' == c) {
-                cell->importance = 0;
+                cell->weight = 0;
+                cell->threat = 0;
+                cell->benefit = 0;
                 cell->player_id = PLAYER_1;
 
             } else if('2' == c) {
-                cell->importance = 0;
+                cell->weight = 0;
+                cell->threat = 0;
+                cell->benefit = 0;
                 cell->player_id = PLAYER_2;
 
             /* non-cell */

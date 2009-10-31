@@ -30,7 +30,7 @@ typedef struct {
 } threat_space_patch_t;
 #endif
 
-void calculate_threats(local_space_t *local_space);
+void calculate_threats(local_space_t *local_space, const player_t player_id);
 
 void add_threat(local_space_t *local_space,
                 board_cell_t *cell,

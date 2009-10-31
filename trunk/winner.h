@@ -1,5 +1,5 @@
 /*
- * status.h
+ * winner.h
  *
  *  Created on: Oct 29, 2009
  *      Author: petergoodman
@@ -11,10 +11,9 @@
 
 #include "common.h"
 #include "board.h"
-#include "threat.h"
+#include "localspace.h"
 
-extern game_status_t local_status(board_t *board, board_cell_t *cell);
-
-game_status_t global_status(board_t *board, const player_t player_id);
+player_t global_winner(board_t *board);
+player_t local_winner(local_space_t *local_space, const board_cell_t *cell);
 
 #endif /* TERMINAL_H_ */

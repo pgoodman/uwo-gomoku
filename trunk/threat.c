@@ -9,6 +9,7 @@
 #include "threat.h"
 
 static int imp_multiplier = 1; /* threat importance multiplier */
+static player_t curr_player_id = PLAYER_1;
 
 /**
  * Score the cells within the local space of each cell in some cell sequence.
@@ -18,13 +19,14 @@ static int imp_multiplier = 1; /* threat importance multiplier */
 static void update_cell_threats(board_cell_t **cells) {
     threat_rating_t threat = 0;
     threat_rating_t benefit = 0;
-    threat_rating_t importance = 0;
+    threat_rating_t incr_threat = 0;
+    threat_rating_t incr_benefit = 0;
     board_cell_t **cell = cells;
     board_cell_t **max = cells + WINNING_SEQ_LENGTH;
     player_t player_id;
 
     /* empty cell space */
-    if(NULL == cells[0]) {
+    if(NULL == *cells) {
         return;
     }
 
@@ -35,7 +37,7 @@ static void update_cell_threats(board_cell_t **cells) {
         if(player_id == NO_PLAYER) {
             continue;
 
-        } else if(player_id == PLAYER_1) {
+        } else if(player_id == curr_player_id) {
             benefit += 1;
 
         } else {
@@ -44,9 +46,9 @@ static void update_cell_threats(board_cell_t **cells) {
     }
 
     /* calculate the incremental threat and benefit */
-    if(!threat) { importance += pow(BENEFIT_BASE, benefit); }
-    if(!benefit) { importance += imp_multiplier * pow(THREAT_BASE, threat); }
-    importance *= imp_multiplier;
+    if(!threat) { incr_benefit += imp_multiplier * pow(BENEFIT_BASE, benefit); }
+    if(!benefit) { incr_threat += imp_multiplier * pow(THREAT_BASE, threat); }
+    /*importance *= imp_multiplier;*/
 
     /* increment the threat level of all cells in this subsequence of the
      * local threat space. */
@@ -54,7 +56,9 @@ static void update_cell_threats(board_cell_t **cells) {
         for(cell = cells; cell < max; ++cell) {
 
             if((*cell)->player_id == NO_PLAYER) {
-                (*cell)->importance += importance;
+                (*cell)->threat += incr_threat;
+                (*cell)->benefit += incr_benefit;
+                /*(*cell)->importance += importance;*/
             }
         }
     }
@@ -86,10 +90,11 @@ static void recalculate_local_space(local_space_t *local_space,
 /**
  * Calculate the threat levels of every cell in the game board for player_id.
  */
-void calculate_threats(local_space_t *local_space) {
+void calculate_threats(local_space_t *local_space, const player_t player_id) {
     cell_space_t *space = &(local_space->cell_space[0]);
     const cell_space_t *max = space + BOARD_NUM_CELLS;
 
+    curr_player_id = player_id;
     imp_multiplier = 1;
 
     for(; space < max; ++space) {
