@@ -12,8 +12,11 @@
  * Compare the importance ratings of two cells.
  */
 static int compare_cell(const void *a, const void *b) {
+    board_cell_t *aa = (*(board_cell_t **) a);
+    board_cell_t *bb = (*(board_cell_t **) b);
     return (
-        (*(board_cell_t **) b)->importance - (*(board_cell_t **) a)->importance
+        bb->weight + bb->benefit + bb->threat - \
+        aa->weight - aa->benefit - aa->threat
     );
 }
 
@@ -23,10 +26,9 @@ static int compare_cell(const void *a, const void *b) {
  *
  * This function also returns the average of all importance ratings.
  */
-int fill_ocs(board_t *board, ordered_cell_seq_t *seq) {
+void fill_ocs(board_t *board, ordered_cell_seq_t *seq) {
 
     int len = 0;
-    /*double total = 0.0;*/
     board_cell_t *all[BOARD_NUM_CELLS];
     board_cell_t **each = &(all[0]);
 
@@ -37,13 +39,10 @@ int fill_ocs(board_t *board, ordered_cell_seq_t *seq) {
     /* get pointers to all cells in the board */
     for(; cell < cell_max; ++cell) {
         if(NO_PLAYER == cell->player_id) {
-            /*total += cell->importance;*/
             *(each++) = cell;
             ++len;
         }
     }
-
-    /*total /= len;*/
 
     /* sort the cell pointers according to the cell importance rating */
     qsort(
@@ -59,6 +58,4 @@ int fill_ocs(board_t *board, ordered_cell_seq_t *seq) {
     for(; len; --len) {
         *(cells++) = *(each++);
     }
-
-    return seq->len > 0 ? seq->cells[0]->importance : 0; /*(int) total;*/
 }

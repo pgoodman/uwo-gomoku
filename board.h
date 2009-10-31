@@ -20,14 +20,15 @@
 /* board cell type */
 typedef struct {
     player_t player_id;
-    threat_rating_t importance;
+    threat_rating_t threat;
+    threat_rating_t benefit;
+    threat_rating_t weight;
 } board_cell_t;
 
 /* board type */
 typedef struct {
     board_cell_t cells[BOARD_LENGTH][BOARD_LENGTH];
     int num_empty_cells;
-    game_status_t status;
 } board_t;
 
 int read_board(board_t *);

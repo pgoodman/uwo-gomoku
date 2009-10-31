@@ -58,13 +58,6 @@ typedef enum {
     PLAYER_2
 } player_t;
 
-typedef enum {
-    GAME_WON,
-    GAME_LOST,
-    GAME_DRAW,
-    GAME_PLAY
-} game_status_t;
-
 typedef short threat_rating_t;
 
 #endif /* COMMON_H_ */
