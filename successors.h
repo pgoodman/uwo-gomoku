@@ -19,6 +19,6 @@ typedef struct {
     int len;
 } ordered_cell_seq_t;
 
-void fill_ocs(board_t *board, ordered_cell_seq_t *seq);
+void successors(board_t *board, ordered_cell_seq_t *seq);
 
 #endif /* SUCCESSORS_H_ */

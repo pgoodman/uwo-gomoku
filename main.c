@@ -14,7 +14,7 @@
 #include "board.h"
 #include "threat.h"
 #include "localspace.h"
-#include "ocs.h"
+#include "successors.h"
 #include "winner.h"
 
 /*#include "game.h"*/
