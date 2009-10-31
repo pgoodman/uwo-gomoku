@@ -136,6 +136,7 @@ player_t local_winner(local_space_t *local_space, const board_cell_t *cell) {
             num_player_2 = 0;
             max = cells + WINNING_SEQ_LENGTH;
 
+            /* count how many of each chip type in this vector */
             for(; cells < max; ++cells) {
                 if(NO_PLAYER == (*cells)->player_id) {
                     continue;
@@ -147,11 +148,8 @@ player_t local_winner(local_space_t *local_space, const board_cell_t *cell) {
             }
 
             /* was their five in a row of either player? */
-            if(5 == num_player_1) {
-                return PLAYER_1;
-            } else if(5 == num_player_2) {
-                return PLAYER_2;
-            }
+            if(5 == num_player_1) { return PLAYER_1; }
+            if(5 == num_player_2) { return PLAYER_2; }
         }
     }
 
