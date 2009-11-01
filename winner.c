@@ -31,6 +31,8 @@ static int it_seqs(int i_start,
 
     /* iterate over several sequences of cells and activate a state machine */
     do {
+        num_in_line = 0;
+
         for(i = i_start, j = j_start;
             i >= 0 && i < len && j >= 0 && j < len;
             i += i_incr, j += j_incr, ++k) {

@@ -13,8 +13,8 @@
 
 /* configuration macros */
 #define MAX_SEARCH_TIME 1 /* time limit for solution searching */
-#define MAX_SEARCH_DEPTH 5 /* depth-limited alpha-beta search */
-#define MAX_SUCCESSORS_TO_SEARCH 5 /* integrated with beam search */
+#define MAX_SEARCH_DEPTH 5 /* depth-limit */
+#define MAX_SUCCESSORS_TO_SEARCH 4 /* node breadth limit */
 
 #define WINNING_SEQ_LENGTH 5
 
