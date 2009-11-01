@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "common.h"
 #include "context.h"
@@ -41,11 +42,11 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
 #if 1
     printf("\nThreats: \n    ");
     for(i = 0; i < BOARD_LENGTH; ++i) {
-        printf("%5d", i);
+        printf("%9d", i);
     }
     printf("\n   +");
     for(i = 0; i < BOARD_LENGTH; ++i) {
-        printf("-----");
+        printf("---------");
     }
     printf("\n");
     for(i = 0; i < BOARD_LENGTH; ++i) {
@@ -53,11 +54,11 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
             cell = &(board->cells[i][j]);
             if(cell->player_id == NO_PLAYER) {
-                printf("%5d", cell->threat + cell->benefit + cell->weight);
+                printf("%3d,%3d |", cell->threat, cell->benefit);
             } else if(cell->player_id != player_id) {
-                printf("    X");
+                printf("        X");
             } else {
-                printf("    _");
+                printf("        _");
             }
         }
         printf("\n");
@@ -136,88 +137,6 @@ int negascout(board_t *board,
 }
 #endif
 
-static int evaluate(board_t *board) {
-    board_cell_t *cell = &(board->cells[0][0]);
-    board_cell_t *max = cell + BOARD_NUM_CELLS;
-    int max_threat = 0;
-    int max_benefit = 0;
-    int max_weight = 0;
-
-    for(; cell < max; ++cell) {
-        if(cell->player_id == NO_PLAYER) {
-            max_threat += cell->threat;
-            max_benefit += cell->benefit;
-            max_weight += cell->weight;
-        }
-    }
-
-    return max_threat > max_benefit ? -1 : (max_threat == max_benefit ? 0 : 1);
-}
-
-static int negamax(board_t *board,
-                   local_space_t *local_space,
-                   board_cell_t *prev_cell,
-                   board_cell_t **max_cell,
-                   player_t player_id,
-                   const int depth,
-                   const int num_empty_cells) {
-
-    ordered_cell_seq_t successors;
-    board_cell_t **cell;
-    board_cell_t **max;
-    int max_val = -1 * (1 << 15); /* should be lower than any eval result */
-    int curr_val;
-
-    /* someone won */
-    if(NULL != prev_cell && NO_PLAYER != local_winner(local_space, prev_cell)) {
-        return evaluate(board) * 2;
-
-    /* reach the depth */
-    } else if(!depth) {
-        return evaluate(board);
-
-    /* draw */
-    } else if(!num_empty_cells) {
-        return 0;
-    }
-
-    /* generate the initial successor states */
-    gen_successors(board, &successors);
-
-    cell = &(successors.cells[0]);
-    max = cell + successors.len;
-
-    /* go over the successors and choose the best one */
-    for(; cell < max; ++cell) {
-        add_threat(local_space, *cell, player_id);
-
-        /* calculate the negamax value for this node. */
-        curr_val = -1 * negamax(
-            board,
-            local_space,
-            *cell,
-            NULL,
-            OPPONENT(player_id),
-            depth - 1,
-            num_empty_cells - 1
-        );
-
-        /* have we found a new best negamax value? */
-        if(max_val < curr_val) {
-            max_val = curr_val;
-
-            /* only update the top level one, ignore all lower levels */
-            if(NULL != max_cell) {
-                *max_cell = *cell;
-            }
-        }
-
-        remove_threat(local_space, *cell);
-    }
-
-    return max_val;
-}
-
 /**
  * Do simple
  */
@@ -259,28 +178,32 @@ int main(const int argc, const char *argv[]) {
 
         init_local_space(&board, &local_space);
         calculate_threats(&local_space, player_id);
-        /*
-        cell = &(board.cells[7][5]);
+#if 0
+        cell = &(board.cells[6][4]);
         add_threat(&local_space, cell, player_id);
 
         print_board_and_threat(&board, player_id);
 
-        remove_threat(&local_space, cell);
+        remove_threat(&local_space, cell, player_id);
 
+
+        read_board(&board);
         cell->player_id = player_id;
         calculate_threats(&local_space, player_id);
         print_board_and_threat(&board, player_id);
-
-        */
+#endif
+#if 1
         negamax(
             &board,
             &local_space,
             NULL, /* prev cell */
             &cell, /* max cell */
             player_id,
-            5,
+            0, /* max */
+            MAX_SEARCH_DEPTH,
             board.num_empty_cells
         );
+#endif
     }
 
     /* make the move */
