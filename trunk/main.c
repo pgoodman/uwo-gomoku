@@ -283,6 +283,7 @@ int main(const int argc, const char *argv[]) {
         );
     }
 
+    /* make the move */
     cell->player_id = player_id;
 
     /* the program won */

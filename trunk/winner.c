@@ -46,7 +46,7 @@ static int it_seqs(int i_start,
                 if(num_in_line >= 0) {
                     ++num_in_line;
                 } else {
-                    num_in_line = -1;
+                    num_in_line = 1;
                 }
 
             /* opponent chip, will either continue a line or break one */
@@ -54,7 +54,7 @@ static int it_seqs(int i_start,
                 if(num_in_line <= 0) {
                     --num_in_line;
                 } else {
-                    num_in_line = 1;
+                    num_in_line = -1;
                 }
             }
 
