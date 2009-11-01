@@ -26,7 +26,7 @@ static int compare_cell(const void *a, const void *b) {
  *
  * This function also returns the average of all importance ratings.
  */
-void successors(board_t *board, ordered_cell_seq_t *seq) {
+void gen_successors(board_t *board, ordered_cell_seq_t *seq) {
 
     int len = 0;
     board_cell_t *all[BOARD_NUM_CELLS];
