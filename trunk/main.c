@@ -12,12 +12,11 @@
 #include <math.h>
 
 #include "common.h"
-#include "context.h"
 #include "board.h"
 #include "threat.h"
 #include "localspace.h"
-#include "successors.h"
 #include "winner.h"
+#include "negamax.h"
 
 /*#include "game.h"*/
 #if 0
@@ -67,75 +66,6 @@ static void print_board_and_threat(board_t *board, player_t player_id) {
 }
 
 #endif
-#if 0
-int negascout(board_t *board,
-              local_space_t *local_space,
-              const player_t player_id,
-              const int depth,
-              int alpha,
-              int beta) {
-
-    ordered_cell_seq_t seq;
-    board_cell_t *cell;
-    player_t opponent_id = OPPONENT(player_id);
-    int a;
-    int b;
-    int i;
-
-    successors(board, &seq);
-
-    if(!depth || !seq.len) {
-        return eval;
-    }
-
-    b = beta;
-
-    for(i = 0; i < seq.len; ++i) {
-
-        cell = seq.cells[i];
-        add_threat(local_space, cell, opponent_id);
-
-        a = -1 * negascout(
-            board,
-            local_space,
-            opponent_id,
-            depth - 1,
-            -1 * b,
-            -1 * alpha
-        );
-
-        if(a > alpha) {
-            alpha = a;
-        }
-
-        if(alpha >= beta) {
-            return alpha;
-        }
-
-        /* re-search */
-        if(alpha >= b) {
-            alpha = -1 * negascout(
-                board,
-                local_space,
-                opponent_id,
-                depth - 1,
-                -1 * beta,
-                -1 * alpha
-            );
-
-            if(alpha >= beta) {
-                return alpha;
-            }
-        }
-
-        b = alpha + 1;
-
-        remove_threat(local_space, cell);
-    }
-
-    return alpha;
-}
-#endif
 
 /**
  * Do simple
@@ -178,6 +108,7 @@ int main(const int argc, const char *argv[]) {
 
         init_local_space(&board, &local_space);
         calculate_threats(&local_space, player_id);
+
 #if 0
         cell = &(board.cells[6][4]);
         add_threat(&local_space, cell, player_id);

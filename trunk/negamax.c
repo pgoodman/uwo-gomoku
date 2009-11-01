@@ -24,14 +24,14 @@ static int evaluate(board_t *board) {
     return (max_threat > max_benefit ? -1 : 1);
 }
 
-static int negamax(board_t *board,
-                   local_space_t *local_space,
-                   board_cell_t *prev_cell,
-                   board_cell_t **max_cell,
-                   player_t player_id,
-                   const int color,
-                   const int depth,
-                   const int num_empty_cells) {
+int negamax(board_t *board,
+            local_space_t *local_space,
+            board_cell_t *prev_cell,
+            board_cell_t **max_cell,
+            player_t player_id,
+            const int color,
+            const int depth,
+            const int num_empty_cells) {
 
     ordered_cell_seq_t successors;
     board_cell_t **cell;
