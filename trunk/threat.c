@@ -82,9 +82,24 @@ static void update_local_space(cell_space_t *cell_space) {
  */
 static void recalculate_local_space(local_space_t *local_space,
                                     board_cell_t *cell) {
-    update_local_space(
-        &(local_space->cell_space[cell - local_space->first_cell])
-    );
+    const board_cell_t *cells = local_space->first_cell;
+    const int col = (int) ((cell - cells) % BOARD_LENGTH);
+    const int row = (int) ((cell - cells) - col) / BOARD_LENGTH;
+    const int i_max = MIN(BOARD_LENGTH - 1, row + LOCAL_SPACE);
+    const int j_max = MIN(BOARD_LENGTH - 1, col + LOCAL_SPACE);
+    const int i_min = MAX(0, row - LOCAL_SPACE);
+    const int j_min = MAX(0, col - LOCAL_SPACE);
+    int i;
+    int j;
+
+    /* update all local spaces within the local space of the cell */
+    for(i = i_min; i <= i_max; ++i) {
+        for(j = j_min; j <= j_max; ++j) {
+            update_local_space(&(local_space->cell_space[
+                (i * BOARD_LENGTH) + j
+            ]));
+        }
+    }
 }
 
 /**

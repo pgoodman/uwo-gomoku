@@ -9,13 +9,10 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <math.h>
 
 #include "common.h"
-
+#include "file.h"
 
 /* board cell type */
 typedef struct {

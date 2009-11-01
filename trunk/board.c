@@ -8,18 +8,12 @@
 
 #include "board.h"
 
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
-
 /**
  * Read in the board from memory. This goes straight to file descriptors
  * instead of file pointers to avoid needlessly passing the board from
  * buffer to buffer.
  */
 int read_board(board_t *board) {
-    ssize_t got; /* number of characters read into the buffer */
-    int fd; /* file descriptor */
     int i; /* row */
     int j; /* column */
     int k = 0; /* buffer index */
@@ -29,17 +23,16 @@ int read_board(board_t *board) {
     board_cell_t *cell; /* current cell in the board */
     DYNAMIC_ASSERT(NULL != board);
 
-    /* open the file */
-    fd = open(BOARD_DIR BOARD_FILE, O_RDONLY | O_BINARY);
-    if(-1 == fd) {
-        return 0;
-    }
+    /* read the board in from the file */
+    i = file_get_contents(
+        BOARD_DIR BOARD_FILE,
+        &(buffer[0]),
+        BOARD_MIN_BUFFER_SIZE - 1,
+        BOARD_BUFFER_SIZE
+    );
 
-    /* get the game board, include any possible \n's or \r's and spaces. */
-    got = read(fd, buffer, BOARD_BUFFER_SIZE * sizeof(char));
-    close(fd);
-
-    if(got < (BOARD_MIN_BUFFER_SIZE - 1)) {
+    /* file read failed */
+    if(!i) {
         return 0;
     }
 
@@ -99,10 +92,8 @@ int put_board(board_t *board) {
     int i; /* row */
     int j; /* column */
     int k = -1; /* buffer index */
-    int fd; /* file descriptor */
     char buffer[BOARD_MIN_BUFFER_SIZE]; /* character buffer for game board */
     board_cell_t *cell; /* current cell in game board */
-    ssize_t put; /* number of characters put into the file from the buffer */
 
     DYNAMIC_ASSERT(NULL != board);
 
@@ -126,18 +117,12 @@ int put_board(board_t *board) {
         buffer[k] = '\n'; /* replaces trailing space on current line */
     }
 
-    /* open the file and directly transfer the buffer */
-    fd = open(BOARD_DIR BOARD_FILE, O_TRUNC | O_CREAT | O_WRONLY);
-    if(-1 == fd) {
-        return 0;
-    }
+    /* write the buffer to a file. */
+    i = file_put_contents(
+        BOARD_DIR BOARD_FILE,
+        &(buffer[0]),
+        BOARD_MIN_BUFFER_SIZE
+    );
 
-    put = write(fd, &(buffer[0]), BOARD_MIN_BUFFER_SIZE * sizeof(char));
-    close(fd);
-
-    if(put < BOARD_MIN_BUFFER_SIZE) {
-        return 0;
-    }
-
-    return 1;
+    return i;
 }
