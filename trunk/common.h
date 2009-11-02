@@ -26,14 +26,11 @@
 #define GAME_DRAW_MESSAGE "I have drawn the game!"
 
 /* other */
-#define SEARCH_BOUNDS 1 /* extends the bounding box to look for successors */
-#define THREAT 1
-#define BENEFIT 1
 #define THREAT_BASE 4
 #define BENEFIT_BASE 4
-#define DEFAULT_THREAT 0
 #define LOCAL_SPACE 2
 #define CELL_WEIGHT_INCREMENT 1
+#define MAX_EVALUATION 99999
 
 /* computed macros */
 #define BOARD_NUM_CELLS (BOARD_LENGTH * BOARD_LENGTH)

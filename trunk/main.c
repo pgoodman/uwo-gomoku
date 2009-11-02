@@ -53,43 +53,46 @@ int main(const int argc, const char *argv[]) {
     /* use the center of the board */
     if(board.num_empty_cells == BOARD_NUM_CELLS) {
         cell = &(board.cells[BOARD_CENTER][BOARD_CENTER]);
+        cell->player_id = player_id;
 
-    /* search for a move to make. */
-    } else {
+    /* if this game hasn't been won then make a move. */
+    } else if(NO_PLAYER == global_winner(&board)) {
+
         init_local_space(&board, &local_space);
         calculate_threats(&local_space, player_id);
 
+        /* search for a move to make */
         negamax(
             &board,
             &local_space,
             NULL, /* prev cell */
             &cell, /* max cell */
             player_id,
-            0, /* max */
+            1, /* max */
             MAX_SEARCH_DEPTH,
             board.num_empty_cells
         );
-    }
 
-    /* make the move */
-    cell->player_id = player_id;
+        /* make the move */
+        cell->player_id = player_id;
 
-    /* the program won */
-    winner_id = global_winner(&board);
-    if(player_id == winner_id) {
-        file_put_contents(
-            BOARD_DIR STATUS_FILE,
-            &(GAME_WON_MESSAGE[0]),
-            strlen(GAME_WON_MESSAGE)
-        );
+        /* the program won */
+        winner_id = global_winner(&board);
+        if(player_id == winner_id) {
+            file_put_contents(
+                BOARD_DIR STATUS_FILE,
+                &(GAME_WON_MESSAGE[0]),
+                strlen(GAME_WON_MESSAGE)
+            );
 
-    /* the game is a draw */
-    } else if(NO_PLAYER == winner_id && 1 >= board.num_empty_cells) {
-        file_put_contents(
-            BOARD_DIR STATUS_FILE,
-            &(GAME_DRAW_MESSAGE[0]),
-            strlen(GAME_DRAW_MESSAGE)
-        );
+        /* the game is a draw */
+        } else if(NO_PLAYER == winner_id && 1 >= board.num_empty_cells) {
+            file_put_contents(
+                BOARD_DIR STATUS_FILE,
+                &(GAME_DRAW_MESSAGE[0]),
+                strlen(GAME_DRAW_MESSAGE)
+            );
+        }
     }
 
     /* output the new board to the file */

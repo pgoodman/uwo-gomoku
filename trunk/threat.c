@@ -17,13 +17,13 @@ static void update_cell_threats(board_cell_t **cells,
                                 const player_t player_id) {
     threat_rating_t threat = 0;
     threat_rating_t benefit = 0;
+    threat_rating_t middle_threat = 0;
     threat_rating_t incr_threat = 0;
     threat_rating_t incr_benefit = 0;
     threat_rating_t incr_weight = 0;
     board_cell_t **cell = cells;
     board_cell_t **max = cells + WINNING_SEQ_LENGTH;
     player_t cell_player_id;
-
 
     /* empty cell space */
     if(NULL == *cells) {
@@ -34,14 +34,23 @@ static void update_cell_threats(board_cell_t **cells,
     for(; cell < max; ++cell) {
 
         cell_player_id = (*cell)->player_id;
+
         if(cell_player_id == NO_PLAYER) {
             continue;
-        } else if(cell_player_id == player_id) {
+        }
+
+        if(cell_player_id == player_id) {
             benefit += 1;
         } else {
-            threat += 1;
+            if(cell > cells && cell < (max - 1)) {
+                middle_threat += 1;
+            } else {
+                threat += 1;
+            }
         }
     }
+
+    threat += middle_threat;
 
     if(threat && benefit) {
         threat = benefit = 0;
@@ -56,6 +65,10 @@ static void update_cell_threats(board_cell_t **cells,
 
         /* make blocking losses important */
         } else if((WINNING_SEQ_LENGTH - 1)  == threat && !benefit) {
+            ++threat;
+
+        /* three opponent chips with no barriers on either side. */
+        } else if((WINNING_SEQ_LENGTH - 2) == middle_threat && !benefit) {
             ++threat;
         }
     } else {
