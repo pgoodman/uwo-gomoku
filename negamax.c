@@ -8,6 +8,9 @@
 
 #include "negamax.h"
 
+/**
+ * Evaluate a game state.
+ */
 static int evaluate(board_t *board) {
     board_cell_t *cell = &(board->cells[0][0]);
     board_cell_t *max = cell + BOARD_NUM_CELLS;
@@ -24,6 +27,11 @@ static int evaluate(board_t *board) {
     return (max_threat > max_benefit ? -1 : 1);
 }
 
+/**
+ * Recursively calculate an approximation of the Negamax value of a the
+ * successors of a given game state. This function yields the chosen next
+ * move by means of max_cell.
+ */
 int negamax(board_t *board,
             local_space_t *local_space,
             board_cell_t *prev_cell,
