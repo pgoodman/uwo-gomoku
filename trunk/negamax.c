@@ -25,8 +25,8 @@ static int evaluate(board_t *board) {
             max_weight = MAX(max_weight, cell->weight);
         }
     }
-
-    return (max_threat > max_benefit ? -1 : 1) * max_weight; /*cell->weight;*/
+    ++max_weight;
+    return (max_threat > max_benefit ? -1 : 1) * max_weight;
 }
 
 /**

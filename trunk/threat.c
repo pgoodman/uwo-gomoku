@@ -43,14 +43,24 @@ static void update_cell_threats(board_cell_t **cells,
         }
     }
 
-    /*
-    if(!threat) { incr_benefit = pow(BENEFIT_BASE, benefit); }
-    if(!benefit) { incr_threat = pow(THREAT_BASE, threat); }
-    */
+    if(threat && benefit) {
+        threat = benefit = 0;
 
-    if(threat && benefit) { threat = benefit = 0; }
-    else if(threat || benefit) { incr_weight = 0; }
-    else { incr_weight = 1; }
+    } else if(threat || benefit) {
+
+        incr_weight = 0;
+
+        /* make winning moves most important */
+        if((WINNING_SEQ_LENGTH - 1) == benefit && !threat) {
+            benefit = WINNING_SEQ_LENGTH + 1;
+
+        /* make blocking losses important */
+        } else if((WINNING_SEQ_LENGTH - 1)  == threat && !benefit) {
+            ++threat;
+        }
+    } else {
+        incr_weight = 1;
+    }
 
     if(benefit) { incr_benefit = pow(BENEFIT_BASE, benefit); }
     if(threat) { incr_threat = pow(THREAT_BASE, threat); }
