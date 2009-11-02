@@ -21,7 +21,8 @@ realclean: clean
 
 # compile the project
 ${OBJ_FILE}: ${OBJS} ${EXT_OBJS}
-	${CC} ${INCLUDES} -o $@ ${OBJS}
+	${CC} ${INCLUDES} -lm -o $@ ${OBJS}
+	
 # base objects
 %.o: ../%.c
 	${CC} ${INCLUDES} $^ $(CFLAGS)
