@@ -12,6 +12,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 int file_get_contents(const char *name,
                       char *buffer,

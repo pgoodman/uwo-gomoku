@@ -18,55 +18,6 @@
 #include "winner.h"
 #include "negamax.h"
 
-/*#include "game.h"*/
-#if 0
-static void print_board_and_threat(board_t *board, player_t player_id) {
-    int i;
-    int j;
-    board_cell_t *cell;
-#if 0
-    printf("Board: \n");
-    for(i = 0; i < BOARD_LENGTH; ++i) {
-        for(j = 0; j < BOARD_LENGTH; ++j) {
-            cell = &(board->cells[i][j]);
-            if(cell->player_id == NO_PLAYER) {
-                printf("0 ");
-            } else {
-                printf("%d ", (int) cell->player_id);
-            }
-        }
-        printf("\n");
-    }
-#endif
-#if 1
-    printf("\nThreats: \n    ");
-    for(i = 0; i < BOARD_LENGTH; ++i) {
-        printf("%9d", i);
-    }
-    printf("\n   +");
-    for(i = 0; i < BOARD_LENGTH; ++i) {
-        printf("---------");
-    }
-    printf("\n");
-    for(i = 0; i < BOARD_LENGTH; ++i) {
-        printf("%2d |", i);
-        for(j = 0; j < BOARD_LENGTH; ++j) {
-            cell = &(board->cells[i][j]);
-            if(cell->player_id == NO_PLAYER) {
-                printf("%3d,%3d |", cell->threat, cell->benefit);
-            } else if(cell->player_id != player_id) {
-                printf("        X");
-            } else {
-                printf("        _");
-            }
-        }
-        printf("\n");
-    }
-#endif
-}
-
-#endif
-
 /**
  * Do simple
  */
@@ -105,25 +56,9 @@ int main(const int argc, const char *argv[]) {
 
     /* search for a move to make. */
     } else {
-
         init_local_space(&board, &local_space);
         calculate_threats(&local_space, player_id);
 
-#if 0
-        cell = &(board.cells[6][4]);
-        add_threat(&local_space, cell, player_id);
-
-        print_board_and_threat(&board, player_id);
-
-        remove_threat(&local_space, cell, player_id);
-
-
-        read_board(&board);
-        cell->player_id = player_id;
-        calculate_threats(&local_space, player_id);
-        print_board_and_threat(&board, player_id);
-#endif
-#if 1
         negamax(
             &board,
             &local_space,
@@ -134,7 +69,6 @@ int main(const int argc, const char *argv[]) {
             MAX_SEARCH_DEPTH,
             board.num_empty_cells
         );
-#endif
     }
 
     /* make the move */
@@ -145,7 +79,7 @@ int main(const int argc, const char *argv[]) {
     if(player_id == winner_id) {
         file_put_contents(
             BOARD_DIR STATUS_FILE,
-            GAME_WON_MESSAGE,
+            &(GAME_WON_MESSAGE[0]),
             strlen(GAME_WON_MESSAGE)
         );
 
@@ -153,7 +87,7 @@ int main(const int argc, const char *argv[]) {
     } else if(NO_PLAYER == winner_id && 1 >= board.num_empty_cells) {
         file_put_contents(
             BOARD_DIR STATUS_FILE,
-            GAME_DRAW_MESSAGE,
+            &(GAME_DRAW_MESSAGE[0]),
             strlen(GAME_DRAW_MESSAGE)
         );
     }

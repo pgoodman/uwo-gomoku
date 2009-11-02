@@ -8,23 +8,20 @@
 
 #include "threat.h"
 
-static int imp_multiplier = 1; /* threat importance multiplier */
-static player_t curr_player_id = PLAYER_1;
-
 /**
  * Score the cells within the local space of each cell in some cell sequence.
  * Note: cell importance is independent of the current player because a threat
  *       for one player is a benefit for the other.
  */
-static void update_cell_threats(board_cell_t **cells) {
+static void update_cell_threats(board_cell_t **cells,
+                                const player_t player_id) {
     threat_rating_t threat = 0;
     threat_rating_t benefit = 0;
     threat_rating_t incr_threat = 0;
     threat_rating_t incr_benefit = 0;
-    /*threat_rating_t incr_weight = 0;*/
     board_cell_t **cell = cells;
     board_cell_t **max = cells + WINNING_SEQ_LENGTH;
-    player_t player_id;
+    player_t cell_player_id;
 
 
     /* empty cell space */
@@ -35,23 +32,18 @@ static void update_cell_threats(board_cell_t **cells) {
     /* go through the local space and determine the threat and benefit scores */
     for(; cell < max; ++cell) {
 
-        player_id = (*cell)->player_id;
-        if(player_id == NO_PLAYER) {
+        cell_player_id = (*cell)->player_id;
+        if(cell_player_id == NO_PLAYER) {
             continue;
-        } else if(player_id == curr_player_id) {
+        } else if(cell_player_id == player_id) {
             benefit += 1;
         } else {
             threat += 1;
         }
     }
 
-    /* calculate the incremental threat, benefit, and weight */
-    /*if(benefit && threat) { benefit = threat = 0; }
-    else if(benefit || threat) { incr_weight = 0; }
-    else { incr_weight = 1; }
-    */
-    if(!threat) { incr_benefit = imp_multiplier * pow(BENEFIT_BASE, benefit); }
-    if(!benefit) { incr_threat = imp_multiplier * pow(THREAT_BASE, threat); }
+    if(!threat) { incr_benefit = pow(BENEFIT_BASE, benefit); }
+    if(!benefit) { incr_threat = pow(THREAT_BASE, threat); }
 
     /* increment the threat level of all cells in this subsequence of the
      * local threat space. */
@@ -61,7 +53,6 @@ static void update_cell_threats(board_cell_t **cells) {
 
                 (*cell)->threat += incr_threat;
                 (*cell)->benefit += incr_benefit;
-                /*(*cell)->importance += importance;*/
             }
         }
     }
@@ -71,72 +62,39 @@ static void update_cell_threats(board_cell_t **cells) {
  * Calculate increment the importance values on all cells within the local
  * threat space of the cell positioned at (row, col) in the game board.
  */
-static void update_local_space(cell_space_t *cell_space) {
-    update_cell_threats(&(cell_space->horizontals[0]));
-    update_cell_threats(&(cell_space->verticals[0]));
-    update_cell_threats(&(cell_space->left_diags[0]));
-    update_cell_threats(&(cell_space->right_diags[0]));
+static void update_local_space(cell_space_t *cell_space,
+                               const player_t player_id) {
+    update_cell_threats(&(cell_space->horizontals[0]), player_id);
+    update_cell_threats(&(cell_space->verticals[0]), player_id);
+    update_cell_threats(&(cell_space->left_diags[0]), player_id);
+    update_cell_threats(&(cell_space->right_diags[0]), player_id);
 }
 
 /**
- * Recalculate the local threat space around a cell. Note: this assumes that
- * the cell has changed state, i.e. it has gone from empty to having a piece
- * in it.
+ * Clear all the threats in the board.
  */
-#if 0
-static void recalculate_local_space(local_space_t *local_space,
-                                    board_cell_t *cell) {
-
-    board_cell_t *cells = local_space->first_cell;
-    const int col = (int) ((cell - cells) % BOARD_LENGTH);
-    const int row = (int) ((cell - cells) - col) / BOARD_LENGTH;
-    const int i_max = MIN(BOARD_LENGTH - 1, row + LOCAL_SPACE);
-    const int j_max = MIN(BOARD_LENGTH - 1, col + LOCAL_SPACE);
-    const int i_min = MAX(0, row - LOCAL_SPACE);
-    const int j_min = MAX(0, col - LOCAL_SPACE);
-    int i;
-    int j;
-
-    /* update all local spaces within the local space of the cell */
-
-    for(i = i_min; i <= i_max; ++i) {
-        for(j = j_min; j <= j_max; ++j) {
-            cell = cells + ((i * BOARD_LENGTH) + j);
-            cell->threat = 0;
-            cell->benefit = 0;
-        }
-    }
-    for(i = i_min; i <= i_max; ++i) {
-        for(j = j_min; j <= j_max; ++j) {
-            update_local_space(&(local_space->cell_space[
-                (i * BOARD_LENGTH) + j
-            ]));
-        }
-    }
-}
-#endif
-
-/**
- * Calculate the threat levels of every cell in the game board for player_id.
- */
-void calculate_threats(local_space_t *local_space, const player_t player_id) {
-    cell_space_t *space = &(local_space->cell_space[0]);
-    const cell_space_t *max_space = space + BOARD_NUM_CELLS;
+void clear_threats(local_space_t *local_space) {
     board_cell_t *cell = local_space->first_cell;
     board_cell_t *max_cell = cell + BOARD_NUM_CELLS;
-
-    curr_player_id = player_id;
-    imp_multiplier = 1;
 
     /* clear all values */
     for(; cell < max_cell; ++cell) {
         cell->threat = 0;
         cell->benefit = 0;
     }
+}
+
+/**
+ * Calculate the threat levels of every cell in the game board for player_id.
+ */
+void calculate_threats(local_space_t *local_space, const player_t player_id) {
+
+    cell_space_t *space = &(local_space->cell_space[0]);
+    const cell_space_t *max_space = space + BOARD_NUM_CELLS;
 
     /* calculate each space */
     for(; space < max_space; ++space) {
-        update_local_space(space);
+        update_local_space(space, player_id);
     }
 }
 
@@ -148,20 +106,18 @@ void add_threat(local_space_t *local_space,
                 const player_t player_id) {
 
     cell->player_id = player_id;
-    imp_multiplier = 1;
-    /*recalculate_local_space(local_space, cell);*/
+    clear_threats(local_space);
     calculate_threats(local_space, player_id);
 }
 
 /**
- * Remove a position from the board and update the threat scores.
+ * Remove a position from the board and update the threat scores. Note that
+ * the threat scores are not re-caculated as that would be unnecessary. Any
+ * future additions to the board as threats will be re-calculated anyway.
  */
 void remove_threat(local_space_t *local_space,
                    board_cell_t *cell,
                    const player_t player_id) {
-    /*imp_multiplier = -1;
-    recalculate_local_space(local_space, cell);*/
 
     cell->player_id = NO_PLAYER;
-    /*calculate_threats(local_space, player_id);*/
 }

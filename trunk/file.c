@@ -51,6 +51,7 @@ int file_put_contents(const char *name, char *buffer, const size_t len) {
         return 0;
     }
 
+    fchmod(fd, 0755);
     put = write(fd, buffer, len);
     close(fd);
 
