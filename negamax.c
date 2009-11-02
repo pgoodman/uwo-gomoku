@@ -16,15 +16,17 @@ static int evaluate(board_t *board) {
     board_cell_t *max = cell + BOARD_NUM_CELLS;
     int max_threat = 0;
     int max_benefit = 0;
+    int max_weight = 0;
 
     for(; cell < max; ++cell) {
         if(cell->player_id == NO_PLAYER) {
             max_threat = MAX(max_threat, cell->threat);
             max_benefit = MAX(max_benefit, cell->benefit);
+            max_weight = MAX(max_weight, cell->weight);
         }
     }
 
-    return (max_threat > max_benefit ? -1 : 1) * cell->weight;
+    return (max_threat > max_benefit ? -1 : 1) * max_weight; /*cell->weight;*/
 }
 
 /**
