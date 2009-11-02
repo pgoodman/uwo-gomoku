@@ -9,8 +9,6 @@
 #ifndef BOARD_H_
 #define BOARD_H_
 
-#include <math.h>
-
 #include "common.h"
 #include "file.h"
 
