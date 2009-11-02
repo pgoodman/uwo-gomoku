@@ -14,19 +14,47 @@
 static int evaluate(board_t *board) {
     board_cell_t *cell = &(board->cells[0][0]);
     board_cell_t *max = cell + BOARD_NUM_CELLS;
+    /*
     int max_threat = 0;
     int max_benefit = 0;
     int max_weight = 0;
+     */
+    int max_score_threat = 0;
+    int max_score_benefit = 0;
+    int max_score = 0;
+    int score;
 
     for(; cell < max; ++cell) {
         if(cell->player_id == NO_PLAYER) {
+
+            /*
             max_threat = MAX(max_threat, cell->threat);
             max_benefit = MAX(max_benefit, cell->benefit);
-            max_weight = MAX(max_weight, cell->weight);
+            */
+            /*max_weight = MAX(max_weight, cell->weight);*/
+
+            score = cell->threat + cell->benefit + cell->weight;
+            if(score >= max_score) {
+                max_score = score;
+                if(max_score_benefit < cell->benefit) {
+                    max_score_benefit = cell->benefit;
+                }
+                if(max_score_threat < cell->threat) {
+                    max_score_threat = cell->threat;
+                }
+            }
         }
     }
-    ++max_weight;
-    return (max_threat > max_benefit ? -1 : 1) * max_weight;
+    /*++max_weight;
+    return (max_threat > max_benefit ? -1 : 1) * max_weight;*/
+
+    if(MAX_EVALUATION < max_score) {
+        max_score = MAX_EVALUATION;
+    }
+
+    /*score = max_score - (total / num_empty);*/
+
+    return (max_score_threat > max_score_benefit ? -1 : 1) * max_score;
 }
 
 /**
@@ -39,21 +67,32 @@ int negamax(board_t *board,
             board_cell_t *prev_cell,
             board_cell_t **max_cell,
             player_t player_id,
-            const int color,
+            const int is_max,
             const int depth,
             const int num_empty_cells) {
 
     ordered_cell_seq_t successors;
     board_cell_t **cell;
     board_cell_t **max;
+    player_t winner_id;
     int max_val = -1 * (1 << 15); /* should be lower than any eval result */
     int curr_val;
 
-    /* reach the depth, game won, or no chips left to place */
-    if(!depth
-    || (NULL != prev_cell && NO_PLAYER != local_winner(local_space, prev_cell))
-    || !num_empty_cells) {
-        return (color ? -1 : 1) * evaluate(board);
+    /* game won */
+    if(NULL != prev_cell) {
+        winner_id = local_winner(local_space, prev_cell);
+        if(NO_PLAYER != winner_id) {
+            return (
+                (is_max ? 1 : -1) *
+                (player_id != winner_id ? -1 : 1) *
+                MAX_EVALUATION
+            );
+        }
+    }
+
+    /* reach the depth or no chips left to place */
+    if(!depth || !num_empty_cells) {
+        return (is_max ? 1 : -1) * evaluate(board);
     }
 
     /* generate the initial successor states */
@@ -73,7 +112,7 @@ int negamax(board_t *board,
             *cell,
             NULL,
             OPPONENT(player_id),
-            1 - color,
+            !is_max,
             depth - 1,
             num_empty_cells - 1
         );
