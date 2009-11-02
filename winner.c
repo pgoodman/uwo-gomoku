@@ -106,14 +106,10 @@ player_t global_winner(board_t *board) {
 }
 
 /**
- * Returns the player id of the player that won in the current local space, or
- * NO_PLAYER if no player won in the current local space.
+ * Returns 1 if a player won in the cellspace and sets *winner_id to the player
+ * id; returns 0 otherwise.
  */
-player_t local_winner(local_space_t *local_space, const board_cell_t *cell) {
-
-    cell_space_t *cell_space = &(local_space->cell_space[
-        (int) (cell - local_space->first_cell)
-    ]);
+static int cell_space_winner(cell_space_t *cell_space, player_t *winner_id) {
 
     board_cell_t **cells = &(cell_space->horizontals[0]);
     board_cell_t **max;
@@ -150,12 +146,47 @@ player_t local_winner(local_space_t *local_space, const board_cell_t *cell) {
             }
 
             /* was their five in a row of either player? */
-            if(5 == num_player_1) { return PLAYER_1; }
-            if(5 == num_player_2) { return PLAYER_2; }
+            if(5 == num_player_1) { *winner_id = PLAYER_1; return 1; }
+            if(5 == num_player_2) { *winner_id = PLAYER_2; return 1; }
         }
     }
 
     /* no player won in this turn */
-    return NO_PLAYER;
+    return 0;
+}
+
+/**
+ * Returns the player id of the player that won in the current local space, or
+ * NO_PLAYER if no player won in the current local space.
+ */
+player_t local_winner(local_space_t *local_space, const board_cell_t *cell) {
+
+    player_t winner_id = NO_PLAYER;
+    board_cell_t *cells = local_space->first_cell;
+    const int col = (int) ((cell - cells) % BOARD_LENGTH);
+    const int row = (int) ((cell - cells) - col) / BOARD_LENGTH;
+    const int i_max = MIN(BOARD_LENGTH - 1, row + LOCAL_SPACE);
+    const int j_max = MIN(BOARD_LENGTH - 1, col + LOCAL_SPACE);
+    const int i_min = MAX(0, row - LOCAL_SPACE);
+    const int j_min = MAX(0, col - LOCAL_SPACE);
+    int i;
+    int j;
+    int someone_won;
+
+    for(i = i_min; i <= i_max; ++i) {
+        for(j = j_min; j <= j_max; ++j) {
+
+            someone_won = cell_space_winner(&(local_space->cell_space[
+                (i * BOARD_LENGTH) + j
+            ]), &winner_id);
+
+            if(someone_won) {
+                goto done;
+            }
+        }
+    }
+
+    done:
+    return winner_id;
 }
 

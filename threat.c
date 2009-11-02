@@ -19,6 +19,7 @@ static void update_cell_threats(board_cell_t **cells,
     threat_rating_t benefit = 0;
     threat_rating_t incr_threat = 0;
     threat_rating_t incr_benefit = 0;
+    threat_rating_t incr_weight = 0;
     board_cell_t **cell = cells;
     board_cell_t **max = cells + WINNING_SEQ_LENGTH;
     player_t cell_player_id;
@@ -42,8 +43,17 @@ static void update_cell_threats(board_cell_t **cells,
         }
     }
 
+    /*
     if(!threat) { incr_benefit = pow(BENEFIT_BASE, benefit); }
     if(!benefit) { incr_threat = pow(THREAT_BASE, threat); }
+    */
+
+    if(threat && benefit) { threat = benefit = 0; }
+    else if(threat || benefit) { incr_weight = 0; }
+    else { incr_weight = 1; }
+
+    if(benefit) { incr_benefit = pow(BENEFIT_BASE, benefit); }
+    if(threat) { incr_threat = pow(THREAT_BASE, threat); }
 
     /* increment the threat level of all cells in this subsequence of the
      * local threat space. */
@@ -53,6 +63,7 @@ static void update_cell_threats(board_cell_t **cells,
 
                 (*cell)->threat += incr_threat;
                 (*cell)->benefit += incr_benefit;
+                (*cell)->weight += incr_weight;
             }
         }
     }
@@ -81,6 +92,7 @@ void clear_threats(local_space_t *local_space) {
     for(; cell < max_cell; ++cell) {
         cell->threat = 0;
         cell->benefit = 0;
+        cell->weight = 0;
     }
 }
 
