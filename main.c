@@ -11,6 +11,7 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+/*#include <time.h>*/
 
 #include "common.h"
 #include "board.h"
@@ -22,24 +23,28 @@
 
 static board_t board;
 static player_t player_id;
+static board_cell_t *change_stack[MAX_SEARCH_DEPTH + 1];
 
 #if 0
-static void print_board(board_t *board) {
+static void print_board(void) {
     int i;
     int j;
     board_cell_t *cell;
 
     for(i = 0; i < BOARD_LENGTH; ++i) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
-            cell = &(board->cells[i][j]);
-            if(NO_PLAYER != cell->player_id) {
-                printf("    *");
+            cell = &(board.cells[i][j]);
+            if(NO_PLAYER == cell->player_id) {
+                printf("%4d", cell->rating);
+            } else if(PLAYER_1 == cell->player_id){
+                printf("   X");
             } else {
-                printf("%5d", (int) cell->rating);
+                printf("   O");
             }
         }
         printf("\n");
     }
+    printf("\n");
 }
 #endif
 
@@ -60,6 +65,7 @@ static void choose_move(board_cell_t **cell) {
     int win_diff_temp;
 
     gen_successors(&board, &successors);
+    change_stack[0] = NULL;
 
     for(curr_succ = 0; curr_succ < successors.len; ++curr_succ) {
 
@@ -68,8 +74,11 @@ static void choose_move(board_cell_t **cell) {
             &board,
             successors.cells[curr_succ],
             player_id,
-            &win_diff_temp
+            &win_diff_temp,
+            &(change_stack[0])
         );
+
+        change_stack[0] = NULL;
 
         /* replace the minimax value, even in the event of a tie. Note:
          * there is no third-level tie breaker :P */
@@ -89,6 +98,8 @@ int main(const int argc, const char *argv[]) {
 
     player_t winner_id;
     board_cell_t *cell = NULL;
+    /*time_t duration = time(NULL);*/
+    int i;
 
     /* make sure the board length is legal */
     STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
@@ -120,7 +131,6 @@ int main(const int argc, const char *argv[]) {
     } else {
 
         init_local_space(&board, player_id);
-        /*print_board(&board);*/
 
         /* search through the board for a winning or losing move and take it
          * immediately. We can do this with out evaluation function, i.e. we
@@ -129,11 +139,33 @@ int main(const int argc, const char *argv[]) {
         minmax_evaluate(&board, player_id, player_id, NO_PLAYER);
         yield_best_move(&cell, player_id);
 
+        /*print_board();*/
+
         /* no such winning or block losing move exists. search for a move for
          * approximately 8 seconds, after that give up and just use whatever
          * cell we chose most recently. */
         if(NULL == cell) {
-            timed_computation((timed_func_t *) &choose_move, (void *) &cell, 8);
+
+            /* clear out the change stack so that it's empty */
+            memset(
+                &(change_stack[0]),
+                0,
+                sizeof(board_cell_t *) * (MAX_SEARCH_DEPTH + 1)
+            );
+
+            /* go and search for a move until completion or until time runs
+             * out. */
+            timed_computation(
+                (timed_func_t *) &choose_move,
+                (void *) &cell,
+                MAX_SEARCH_TIME
+            );
+
+            /* go through the change stack and undo any changes that weren't
+             * cancelled. */
+            for(i = 0; i < MAX_SEARCH_DEPTH && NULL != change_stack[i]; ++i) {
+                change_stack[i]->player_id = NO_PLAYER;
+            }
         }
 
         /* this shouldn't happen, but it's worth checking... */
@@ -162,6 +194,12 @@ int main(const int argc, const char *argv[]) {
             );
         }
     }
+
+    /*
+    print_board();
+    printf("total time: %d \n", (int) (time(NULL) - duration));
+    exit(1);
+    */
 
     /* output the new board to the file */
     if(!put_board(&board)) {

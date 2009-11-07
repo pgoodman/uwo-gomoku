@@ -58,10 +58,11 @@ static void eval_seqs(int i_start,
 
             /* yield a match of four nearby cells in a row */
             if(num_since_start >= 5) {
-                if(num_in_line >= 4) {
+                if(num_in_line >= 4 && num_in_line >= (num_since_start - 2)) {
                     ++num_fours_player_1;
                     winning_empty_cell_1 = last_empty_cell;
-                } else if(num_in_line <= -4) {
+                } else if(num_in_line <= -4
+                       && (num_in_line + num_since_start) <= 2) {
                     ++num_fours_player_2;
                     winning_empty_cell_2 = last_empty_cell;
                 }
