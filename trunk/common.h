@@ -13,8 +13,8 @@
 
 /* configuration macros */
 #define MAX_SEARCH_TIME 1 /* time limit for solution searching */
-#define MAX_SEARCH_DEPTH 5 /* depth-limit */
-#define MAX_SUCCESSORS_TO_SEARCH 4 /* node breadth limit */
+#define MAX_SEARCH_DEPTH 7 /* depth-limit */
+#define MAX_SUCCESSORS_TO_SEARCH 5 /* node breadth limit */
 
 #define WINNING_SEQ_LENGTH 5
 
@@ -28,7 +28,7 @@
 /* other */
 #define THREAT_BASE 4
 #define BENEFIT_BASE 4
-#define LOCAL_SPACE 2
+#define LOCAL_SPACE 4
 #define CELL_WEIGHT_INCREMENT 1
 #define MAX_EVALUATION 99999
 
@@ -55,6 +55,6 @@ typedef enum {
     PLAYER_2
 } player_t;
 
-typedef short threat_rating_t;
+typedef unsigned int cell_rating_t;
 
 #endif /* COMMON_H_ */

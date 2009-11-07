@@ -15,9 +15,10 @@
 /* board cell type */
 typedef struct {
     player_t player_id;
-    threat_rating_t threat;
-    threat_rating_t benefit;
-    threat_rating_t weight;
+    cell_rating_t rating;
+    /*cell_rating_t player_1;
+    cell_rating_t player_2;
+    cell_rating_t weight;*/
 } board_cell_t;
 
 /* board type */
