@@ -65,7 +65,7 @@ static void fill_cell_space(board_t *board,
 }
 
 /**
- * Score the cells within the local space of each cell in some cell sequence.
+ * Score the five cells centered at the current cell.
  */
 static void update_cell_ratings(const int i_init,
                                 const int j_init,
@@ -107,13 +107,11 @@ static void update_cell_ratings(const int i_init,
         } else if(cell->player_id == max_player_id) {
             benefit += 1;
 
-
         /* opponent */
         } else {
             threat += 1;
         }
     }
-
 
     /* calculate threat value */
     if(!threat) { importance += (benefit * benefit * benefit * benefit); }
@@ -152,53 +150,6 @@ static void eval_local_space(void) {
             update_cell_ratings(i, j, 1, -1);
         }
     }
-
-#if 0
-    cell_rating_t threat = 0;
-    cell_rating_t benefit = 0;
-    cell_rating_t incr = 0;
-
-    player_t player_id;*/
-
-    for(i = 0; cell < max; ++cell, ++i) {
-
-        if(NO_PLAYER == cell->player_id) {
-            continue;
-        }
-
-        for(j = 0; j < 4; ++j) {
-
-            local_start = &(local_space.cell_space[i].seq[j][0]);
-            threat = 0;
-            benefit = 0;
-
-            for(local_cell = local_start; (*local_cell) != NULL; ++local_cell) {
-                player_id = (*local_cell)->player_id;
-
-                if(max_player_id == player_id) {
-                    ++benefit;
-                } else if(NO_PLAYER != player_id) {
-                    ++threat;
-                }
-            }
-
-            if(!threat && !benefit) {
-                continue;
-            }
-
-            incr = (
-                (threat * threat * threat * threat) +
-                (benefit * benefit * benefit)
-            );
-
-            for(local_cell = local_start; (*local_cell) != NULL; ++local_cell) {
-                if(NO_PLAYER == (*local_cell)->player_id) {
-                    (*local_cell)->rating += incr;
-                }
-            }
-        }
-    }
-#endif
 }
 
 /**
@@ -232,17 +183,28 @@ void init_local_space(board_t *board, const player_t player_id) {
 
 /**
  * Return the player id that won in the current local space, or NO_PLAYER
- * if no one won.
+ * if no one won. Note: this checks it using one cell space with respect to
+ * another (possibly non-existant) one.
  */
-player_t local_space_winner(board_cell_t *center_cell) {
+player_t local_space_winner(board_cell_t *center_cell, board_t *normal_board) {
 
     cell_space_t *cell_space = &(local_space.cell_space[
         (unsigned int) (center_cell - local_space.first_cell)
     ]);
+
     board_cell_t **first_cell;
     board_cell_t **cell;
+    board_cell_t *normal = local_space.first_cell;
+
+    player_t player_id;
+
     int i;
     int num_in_line = 0;
+
+    /* find out the start of the normal. */
+    if(NULL != normal_board) {
+        normal = &(normal_board->cells[0][0]);
+    }
 
     /* go over the four cell sequences in this cell space */
     for(i = 0; i < 4; ++i) {
@@ -253,12 +215,17 @@ player_t local_space_winner(board_cell_t *center_cell) {
         /* go over each cell in a cell sequence */
         for(cell = first_cell; NULL != (*cell); ++cell) {
 
+            /* normalize to a possibly different board! */
+            player_id = (
+                normal + ((unsigned int) ((*cell) - local_space.first_cell))
+            )->player_id;
+
             /* a break in a sequence of chips */
-            if((*cell)->player_id == NO_PLAYER) {
+            if(player_id == NO_PLAYER) {
                 num_in_line = 0;
 
             /* player 1 chip, will either continue a line or break one */
-            } else if((*cell)->player_id == PLAYER_1) {
+            } else if(player_id == PLAYER_1) {
                 if(num_in_line >= 0) {
                     ++num_in_line;
                 } else {
@@ -286,46 +253,3 @@ player_t local_space_winner(board_cell_t *center_cell) {
     return NO_PLAYER;
 }
 
-#if 0
-/**
- * Change the ratings in a cell space.
- */
-void update_local_space(board_cell_t *center_cell, const int mult) {
-
-    cell_space_t *cell_space = &(local_space.cell_space[
-        (unsigned int) (center_cell - local_space.first_cell)
-    ]);
-    board_cell_t **first_cell;
-    board_cell_t **cell;
-    cell_rating_t player_1 = 0;
-    cell_rating_t player_2 = 0;
-    int i;
-
-    for(i = 0; i < 4; ++i) {
-
-        first_cell = &(cell_space->seq[i][0]);
-        player_1 = 0;
-        player_2 = 0;
-
-        /* figure out the number of player 1 and player 2 chips */
-        for(cell = first_cell; NULL != (*cell); ++cell) {
-
-            if(PLAYER_1 == (*cell)->player_id) {
-                ++player_1;
-            } else if(PLAYER_2 == (*cell)->player_id) {
-                ++player_2;
-            }
-        }
-
-        if(!player_1 && !player_2) {
-            continue;
-        }
-
-        /* update the cell ratings */
-        for(cell = first_cell; NULL != (*cell); ++cell) {
-            (*cell)->player_1 += player_1;
-            (*cell)->player_2 += player_2;
-        }
-    }
-}
-#endif

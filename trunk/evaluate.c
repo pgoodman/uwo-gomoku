@@ -148,7 +148,14 @@ int minmax_evaluate(board_t *board,
     winning_empty_cell_1 = NULL;
     winning_empty_cell_2 = NULL;
 
-    /* find all the winning threats on the game board */
+    /* find all the winning threats on the game board. given the design of
+     * eval_seqs, when iterating over diagonal sequences, this can only do half
+     * of the board (exercise of the reader to figure out why) and so each
+     * needs to be called twice, one for the big half, the other for the small
+     * half. It should be noted that all can be done in one fell swoop if we
+     * consider thinking about which diagonal we are currently on, and said code
+     * exists in an earlier revision of the AI, but it wasn't as sexy as the
+     * above code and made it difficult to do what I need to do. */
     eval_seqs(0, 0, 0, 1, 1, 0, BOARD_NUM_CELLS); /* - */
     eval_seqs(0, 0, 1, 0, 0, 1, BOARD_NUM_CELLS); /* | */
     eval_seqs(0, diag_off, 1, 1, 0, -1, diag_big_max); /* \ */
@@ -158,9 +165,9 @@ int minmax_evaluate(board_t *board,
 
     /* score the current game board in terms of threats and double threats */
     if(PLAYER_1 == max_player_id) {
-        if(num_fours_player_1 >= 2) {
+        if(num_fours_player_1 >= 2) { /* we have created a double threat */
             return INT_MAX;
-        } else if(num_fours_player_2 >= 2) {
+        } else if(num_fours_player_2 >= 2) { /* opponent has created a d.t. */
             return INT_MIN;
         } else {
             return (int) (
@@ -169,10 +176,10 @@ int minmax_evaluate(board_t *board,
                 pow(3, num_threes_player_1)
             );
         }
-    } else {
-        if(num_fours_player_2 >= 2) {
+    } else if(PLAYER_2 == max_player_id) {
+        if(num_fours_player_2 >= 2) { /* we have created a d.t. */
             return INT_MAX;
-        } else if(num_fours_player_1 >= 2) {
+        } else if(num_fours_player_1 >= 2) { /* opponent created a d.t. */
             return INT_MAX;
         } else {
             return (int) (
