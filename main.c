@@ -11,7 +11,6 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
-/*#include <time.h>*/
 
 #include "common.h"
 #include "board.h"
@@ -21,9 +20,19 @@
 #include "context.h"
 #include "evaluate.h"
 
+/* main copy of the board from the file that will be put back to the file */
 static board_t board;
+
+/* secondary copy of the board used for searching. this copy exists as the
+ * search performs in-place modifications of the board as it goes along, and
+ * search can also be abruptley stopped with an alarm and context switch, and
+ * so maintaining a stack of changes to undo was not enough to guarantee that
+ * only one move would ever be placed back into the board after we're done the
+ * search. */
+static board_t search_board;
+
+/* the player id of the AI */
 static player_t player_id;
-static board_cell_t *change_stack[MAX_SEARCH_DEPTH + 1];
 
 #if 0
 static void print_board(void) {
@@ -50,9 +59,11 @@ static void print_board(void) {
 
 /**
  * Choose a one of the immediate successors as a move to make. Note: this
- * implements the first MAX level of the minimax algorithm. This is intentional
+ * implements the first MAX level of the min/max algorithm. This is intentional
  * as it allows us to exit this function early using context switching and still
- * get a move choice out of it.
+ * get a move choice out of it. Also, this lets us use the extra
+ * num_wins - num_losses heuristic as a way to break min/max ties. Whether or
+ * not this is a good heuristic is another question!
  */
 static void choose_move(board_cell_t **cell) {
 
@@ -64,21 +75,17 @@ static void choose_move(board_cell_t **cell) {
     int win_diff = INT_MIN;
     int win_diff_temp;
 
-    gen_successors(&board, &successors);
-    change_stack[0] = NULL;
+    gen_successors(&search_board, &successors);
 
     for(curr_succ = 0; curr_succ < successors.len; ++curr_succ) {
 
-        /* get the minimax value of this successor */
+        /* get the min/max value of this successor */
         minmax_temp = search_for_move(
-            &board,
+            &search_board,
             successors.cells[curr_succ],
             player_id,
-            &win_diff_temp,
-            &(change_stack[0])
+            &win_diff_temp
         );
-
-        change_stack[0] = NULL;
 
         /* replace the minimax value, even in the event of a tie. Note:
          * there is no third-level tie breaker :P */
@@ -92,14 +99,13 @@ static void choose_move(board_cell_t **cell) {
 }
 
 /**
- * Do simple
+ * Start up the AI and have it choose a move to make.
  */
 int main(const int argc, const char *argv[]) {
 
     player_t winner_id;
-    board_cell_t *cell = NULL;
-    /*time_t duration = time(NULL);*/
-    int i;
+    board_cell_t *search_cell = NULL;
+    board_cell_t *board_cell = NULL;
 
     /* make sure the board length is legal */
     STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
@@ -122,62 +128,54 @@ int main(const int argc, const char *argv[]) {
         DIE("Unable to read playing board.\n");
     }
 
+    /* copy the board data structure into the search_board. */
+    memcpy(&search_board, &board, sizeof(board_t));
+
     /* use the center of the board */
     if(BOARD_NUM_CELLS == board.num_empty_cells) {
-        cell = &(board.cells[BOARD_CENTER][BOARD_CENTER]);
-        cell->player_id = player_id;
+        board_cell = &(board.cells[BOARD_CENTER][BOARD_CENTER]);
+        board_cell->player_id = player_id;
 
     /* search for a move. */
     } else {
 
-        init_local_space(&board, player_id);
+        init_local_space(&search_board, player_id);
 
         /* search through the board for a winning or losing move and take it
          * immediately. We can do this with out evaluation function, i.e. we
          * evaluate the start state!
          */
-        minmax_evaluate(&board, player_id, player_id, NO_PLAYER);
-        yield_best_move(&cell, player_id);
-
-        /*print_board();*/
+        minmax_evaluate(&search_board, player_id, player_id, NO_PLAYER);
+        yield_best_move(&search_cell, player_id);
 
         /* no such winning or block losing move exists. search for a move for
          * approximately 8 seconds, after that give up and just use whatever
          * cell we chose most recently. */
-        if(NULL == cell) {
-
-            /* clear out the change stack so that it's empty */
-            memset(
-                &(change_stack[0]),
-                0,
-                sizeof(board_cell_t *) * (MAX_SEARCH_DEPTH + 1)
-            );
+        if(NULL == search_cell) {
 
             /* go and search for a move until completion or until time runs
              * out. */
             timed_computation(
                 (timed_func_t *) &choose_move,
-                (void *) &cell,
+                (void *) &search_cell,
                 MAX_SEARCH_TIME
             );
-
-            /* go through the change stack and undo any changes that weren't
-             * cancelled. */
-            for(i = 0; i < MAX_SEARCH_DEPTH && NULL != change_stack[i]; ++i) {
-                change_stack[i]->player_id = NO_PLAYER;
-            }
         }
 
         /* this shouldn't happen, but it's worth checking... */
-        if(NULL == cell) {
+        if(NULL == search_cell) {
             DIE("No cell was chosen as the next move.\n");
         }
 
-        /* make our move */
-        cell->player_id = player_id;
+        /* we are dealing with a coordinate from 'search_board' and we want
+         * to modify a coordinate in 'board', normalize to 'board'. */
+        board_cell = (
+            (&(board.cells[0][0])) + (search_cell - &(search_board.cells[0][0]))
+        );
+        board_cell->player_id = player_id; /* cell in 'board' */
 
-        /* the program won! */
-        winner_id = local_space_winner(cell);
+        /* check if the AI won or tied. */
+        winner_id = local_space_winner(search_cell, &board);
         if(player_id == winner_id) {
             file_put_contents(
                 BOARD_DIR STATUS_FILE,
@@ -194,12 +192,6 @@ int main(const int argc, const char *argv[]) {
             );
         }
     }
-
-    /*
-    print_board();
-    printf("total time: %d \n", (int) (time(NULL) - duration));
-    exit(1);
-    */
 
     /* output the new board to the file */
     if(!put_board(&board)) {

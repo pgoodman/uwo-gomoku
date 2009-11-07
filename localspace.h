@@ -15,7 +15,7 @@
 
 void init_local_space(board_t *board, const player_t player_id);
 
-player_t local_space_winner(board_cell_t *center_cell);
+player_t local_space_winner(board_cell_t *center_cell, board_t *normal_board);
 
 /*void update_local_space(board_cell_t *centre_cell, const int mult);*/
 
