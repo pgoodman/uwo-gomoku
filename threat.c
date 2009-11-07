@@ -69,7 +69,7 @@ static void update_cell_threats(board_cell_t **cells,
 
         /* three opponent chips with no barriers on either side. */
         } else if((WINNING_SEQ_LENGTH - 2) == middle_threat && !benefit) {
-            ++threat;
+            incr_weight = 2;
         }
     } else {
         incr_weight = 1;

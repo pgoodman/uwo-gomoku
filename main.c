@@ -10,24 +10,83 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <limits.h>
 
 #include "common.h"
 #include "board.h"
-#include "threat.h"
 #include "localspace.h"
-#include "winner.h"
-#include "negamax.h"
+#include "successors.h"
+#include "search.h"
+#include "context.h"
+
+static board_t board;
+static player_t player_id;
+
+#if 1
+static void print_board(board_t *board) {
+    int i;
+    int j;
+    board_cell_t *cell;
+
+    for(i = 0; i < BOARD_LENGTH; ++i) {
+        for(j = 0; j < BOARD_LENGTH; ++j) {
+            cell = &(board->cells[i][j]);
+            if(NO_PLAYER != cell->player_id) {
+                printf("    *");
+            } else {
+                printf("%5d", (int) cell->rating);
+            }
+        }
+        printf("\n");
+    }
+}
+#endif
+
+/**
+ * Choose a one of the immediate successors as a move to make. Note: this
+ * implements the first MAX level of the minimax algorithm. This is intentional
+ * as it allows us to exit this function early using context switching and still
+ * get a move choice out of it.
+ */
+static void choose_move(board_cell_t **cell) {
+    ordered_cell_seq_t successors;
+
+    int curr_succ;
+    int minmax_val = INT_MIN;
+    int minmax_temp;
+    int win_diff = INT_MIN;
+    int win_diff_temp;
+
+    gen_successors(&board, &successors);
+
+    for(curr_succ = 0; curr_succ < successors.len; ++curr_succ) {
+
+        /* get the minimax value of this successor */
+        minmax_temp = search_for_move(
+            &board,
+            successors.cells[curr_succ],
+            player_id,
+            &win_diff_temp
+        );
+
+        /* replace the minimax value, even in the event of a tie. Note:
+         * there is no third-level tie breaker :P */
+        if(minmax_temp > minmax_val
+        || (minmax_temp == minmax_val && win_diff_temp > win_diff)) {
+            minmax_val = minmax_temp;
+            *cell = successors.cells[curr_succ];
+            win_diff = win_diff_temp;
+        }
+    }
+}
 
 /**
  * Do simple
  */
 int main(const int argc, const char *argv[]) {
 
-    board_t board;
-    board_cell_t *cell;
-    player_t player_id;
     player_t winner_id;
-    local_space_t local_space;
+    board_cell_t *cell = NULL;
 
     /* make sure the board length is legal */
     STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
@@ -51,14 +110,29 @@ int main(const int argc, const char *argv[]) {
     }
 
     /* use the center of the board */
-    if(board.num_empty_cells == BOARD_NUM_CELLS) {
+    if(BOARD_NUM_CELLS == board.num_empty_cells) {
         cell = &(board.cells[BOARD_CENTER][BOARD_CENTER]);
         cell->player_id = player_id;
 
-    /* if this game hasn't been won then make a move. */
-    } else if(NO_PLAYER == global_winner(&board)) {
+    /* search for a move. */
+    } else {
 
-        init_local_space(&board, &local_space);
+        init_local_space(&board, player_id);
+        print_board(&board);
+#if 1
+
+
+        /* search for a move for approximately 8 seconds, after that give up
+         * and just use whatever cell we chose most recently. */
+        timed_computation((timed_func_t *) &choose_move, (void *) &cell, 8);
+
+        /* this shouldn't happen, but it's worth checking... */
+        if(NULL == cell) {
+            DIE("No cell was chosen as the next move.\n");
+        }
+
+#endif
+#if 0
         calculate_threats(&local_space, player_id);
 
         /* search for a move to make */
@@ -72,12 +146,12 @@ int main(const int argc, const char *argv[]) {
             MAX_SEARCH_DEPTH,
             board.num_empty_cells
         );
-
+#endif
         /* make the move */
         cell->player_id = player_id;
 
-        /* the program won */
-        winner_id = global_winner(&board);
+        /* the program won! */
+        winner_id = local_space_winner(cell);
         if(player_id == winner_id) {
             file_put_contents(
                 BOARD_DIR STATUS_FILE,

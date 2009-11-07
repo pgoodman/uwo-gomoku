@@ -20,7 +20,13 @@ int read_board(board_t *board) {
     char buffer[BOARD_BUFFER_SIZE]; /* text buffer for file contents */
     char c; /* current character in the buffer */
     board_cell_t *cell; /* current cell in the board */
+
+    const cell_rating_t o = BOARD_CENTER;
+    const cell_rating_t t = (cell_rating_t) ((o * o) / 2);
+
     DYNAMIC_ASSERT(NULL != board);
+
+    board->num_empty_cells = BOARD_NUM_CELLS;
 
     /* read the board in from the file */
     i = file_get_contents(
@@ -43,22 +49,23 @@ int read_board(board_t *board) {
 
             if('0' == c) {
                 cell->player_id = NO_PLAYER;
-                ++board->num_empty_cells;
 
             } else if('1' == c) {
                 cell->player_id = PLAYER_1;
+                --(board->num_empty_cells);
 
             } else if('2' == c) {
                 cell->player_id = PLAYER_2;
+                --(board->num_empty_cells);
 
             /* non-cell */
             } else {
                 continue;
             }
 
-            cell->weight = 0;
-            cell->threat = 0;
-            cell->benefit = 0;
+            cell->rating = (cell_rating_t) (
+                t - ((((i - o) * (i - o)) + ((j - o) * (j - o))) / 4)
+            );
 
             ++j;
         }

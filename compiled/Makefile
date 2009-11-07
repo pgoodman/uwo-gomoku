@@ -8,8 +8,8 @@ CFLAGS = -O2 -g -pedantic -pedantic-errors -Wall -Werror -c -ansi
 OBJ_FILE = fiveinarow
 
 INCLUDES = 
-OBJS = ./main.o ./board.o ./threat.o ./successors.o \
-       ./localspace.o ./winner.o ./file.o ./negamax.o
+OBJS = ./main.o ./board.o ./successors.o ./localspace.o ./file.o \
+       ./evaluate.o ./search.o ./context.o
 
 all: ${OBJ_FILE}
 

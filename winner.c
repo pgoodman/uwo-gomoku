@@ -6,6 +6,7 @@
  *     Version: $Id$
  */
 
+#if 0
 #include "winner.h"
 
 /* a bit of ugly use of globals, but they are nicely confined and this is
@@ -189,4 +190,4 @@ player_t local_winner(local_space_t *local_space, const board_cell_t *cell) {
     done:
     return winner_id;
 }
-
+#endif
