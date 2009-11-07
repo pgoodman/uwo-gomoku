@@ -18,6 +18,10 @@ static int num_fours_player_2 = 0;
 static int num_threes_player_1 = 0;
 static int num_threes_player_2 = 0;
 
+/* keep track of winning cells */
+static board_cell_t *winning_empty_cell_1 = NULL;
+static board_cell_t *winning_empty_cell_2 = NULL;
+
 /**
  * Iterate over sequences of sequences of cells and incrementally perform
  * multiple pattern matching on the cells in linear time and constant space.
@@ -34,6 +38,7 @@ static void eval_seqs(int i_start,
     int k = 0;
     const int len = BOARD_LENGTH;
     board_cell_t *cell;
+    board_cell_t *last_empty_cell = NULL;
 
     int num_since_start = 0; /* number of same-color chips+empties in the seq */
     int num_in_line = 0; /* number of same-color chips in the sequence */
@@ -55,8 +60,10 @@ static void eval_seqs(int i_start,
             if(num_since_start >= 5) {
                 if(num_in_line >= 4) {
                     ++num_fours_player_1;
+                    winning_empty_cell_1 = last_empty_cell;
                 } else if(num_in_line <= -4) {
                     ++num_fours_player_2;
+                    winning_empty_cell_2 = last_empty_cell;
                 }
 
             /* yield a match of three nearby cells in a row */
@@ -71,6 +78,8 @@ static void eval_seqs(int i_start,
             if(cell->player_id == NO_PLAYER) {
                 ++num_since_start;
                 ++num_consecutive_empty;
+
+                last_empty_cell = cell;
 
                 if(num_consecutive_empty > 1) {
                     num_in_line = 0;
@@ -135,6 +144,8 @@ int minmax_evaluate(board_t *board,
     num_fours_player_2 = 0;
     num_threes_player_1 = 0;
     num_threes_player_2 = 0;
+    winning_empty_cell_1 = NULL;
+    winning_empty_cell_2 = NULL;
 
     /* find all the winning threats on the game board */
     eval_seqs(0, 0, 0, 1, 1, 0, BOARD_NUM_CELLS); /* - */
@@ -172,4 +183,32 @@ int minmax_evaluate(board_t *board,
     }
 
     return 0;
+}
+
+/**
+ * Yield a best move if there is one for the current player. Note: this *must*
+ * be called after minimax_evaluate(). If no best move exists then NULL is set
+ * as the value of the cell pointer pointed to.
+ */
+void yield_best_move(board_cell_t **cell, const player_t player_id) {
+
+    *cell = NULL;
+
+    /* player 1's best move */
+    if(PLAYER_1 == player_id) {
+        if(NULL != winning_empty_cell_1) { /* take win */
+            *cell = winning_empty_cell_1;
+        } else if(NULL != winning_empty_cell_2) { /* defend loss */
+            *cell = winning_empty_cell_2;
+        }
+
+    /* player 2's best move */
+    } else if(PLAYER_2 == player_id) {
+
+        if(NULL != winning_empty_cell_2) { /* take win */
+            *cell = winning_empty_cell_2;
+        } else if(NULL != winning_empty_cell_1) { /* defend loss */
+            *cell = winning_empty_cell_1;
+        }
+    }
 }

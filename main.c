@@ -18,11 +18,12 @@
 #include "successors.h"
 #include "search.h"
 #include "context.h"
+#include "evaluate.h"
 
 static board_t board;
 static player_t player_id;
 
-#if 1
+#if 0
 static void print_board(board_t *board) {
     int i;
     int j;
@@ -49,6 +50,7 @@ static void print_board(board_t *board) {
  * get a move choice out of it.
  */
 static void choose_move(board_cell_t **cell) {
+
     ordered_cell_seq_t successors;
 
     int curr_succ;
@@ -118,36 +120,28 @@ int main(const int argc, const char *argv[]) {
     } else {
 
         init_local_space(&board, player_id);
-        print_board(&board);
-#if 1
+        /*print_board(&board);*/
 
+        /* search through the board for a winning or losing move and take it
+         * immediately. We can do this with out evaluation function, i.e. we
+         * evaluate the start state!
+         */
+        minmax_evaluate(&board, player_id, player_id, NO_PLAYER);
+        yield_best_move(&cell, player_id);
 
-        /* search for a move for approximately 8 seconds, after that give up
-         * and just use whatever cell we chose most recently. */
-        timed_computation((timed_func_t *) &choose_move, (void *) &cell, 8);
+        /* no such winning or block losing move exists. search for a move for
+         * approximately 8 seconds, after that give up and just use whatever
+         * cell we chose most recently. */
+        if(NULL == cell) {
+            timed_computation((timed_func_t *) &choose_move, (void *) &cell, 8);
+        }
 
         /* this shouldn't happen, but it's worth checking... */
         if(NULL == cell) {
             DIE("No cell was chosen as the next move.\n");
         }
 
-#endif
-#if 0
-        calculate_threats(&local_space, player_id);
-
-        /* search for a move to make */
-        negamax(
-            &board,
-            &local_space,
-            NULL, /* prev cell */
-            &cell, /* max cell */
-            player_id,
-            1, /* max */
-            MAX_SEARCH_DEPTH,
-            board.num_empty_cells
-        );
-#endif
-        /* make the move */
+        /* make our move */
         cell->player_id = player_id;
 
         /* the program won! */
