@@ -4,7 +4,7 @@
 #
 
 CC = gcc
-CFLAGS = -O2 -g -pedantic -pedantic-errors -Wall -Werror -c -ansi
+CFLAGS = -O3 -g -pedantic -pedantic-errors -Wall -Werror -c -ansi
 OBJ_FILE = fiveinarow
 
 INCLUDES = 

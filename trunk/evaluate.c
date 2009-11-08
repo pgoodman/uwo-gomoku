@@ -22,6 +22,51 @@ static int num_threes_player_2 = 0;
 static board_cell_t *winning_empty_cell_1 = NULL;
 static board_cell_t *winning_empty_cell_2 = NULL;
 
+/* keep track of blocking cells */
+static board_cell_t *blocking_empty_cell_1 = NULL;
+static board_cell_t *blocking_empty_cell_2 = NULL;
+
+/**
+ * Recognize either a 4-threat or a 3-threat. That is, all 5-tuples with 4 chips
+ * and 1 empty cell, or all 5 or 6-tuples with 3 chips and at least 2 empties.
+ */
+static void eval_threat(const int num_since_start,
+                        const int num_in_line,
+                        const int num_consecutive_empty,
+                        board_cell_t *last_empty_cell) {
+
+    /* yield a match of four nearby cells in a row */
+    if(num_since_start >= 5 && (num_since_start - num_in_line) > 0) {
+        if(num_in_line >= 4 && num_in_line >= (num_since_start - 2)) {
+            ++num_fours_player_1;
+            if(NULL == winning_empty_cell_1) {
+                winning_empty_cell_1 = last_empty_cell;
+            }
+        } else if(num_in_line <= -4
+               && (num_in_line + num_since_start) <= 2) {
+            ++num_fours_player_2;
+            if(NULL == winning_empty_cell_2) {
+                winning_empty_cell_2 = last_empty_cell;
+            }
+        }
+    }
+
+    /* yield a match of three nearby cells in a row */
+    if(num_since_start > 4 && num_consecutive_empty == 1) {
+        if(num_in_line == 3) {
+            ++num_threes_player_1;
+            if(NULL == blocking_empty_cell_1) {
+                blocking_empty_cell_1 = last_empty_cell;
+            }
+        } else if(num_in_line == -3) {
+            ++num_threes_player_2;
+            if(NULL == blocking_empty_cell_2) {
+                blocking_empty_cell_2 = last_empty_cell;
+            }
+        }
+    }
+}
+
 /**
  * Iterate over sequences of sequences of cells and incrementally perform
  * multiple pattern matching on the cells in linear time and constant space.
@@ -56,25 +101,12 @@ static void eval_seqs(int i_start,
 
             cell = &(game_board->cells[i][j]);
 
-            /* yield a match of four nearby cells in a row */
-            if(num_since_start >= 5) {
-                if(num_in_line >= 4 && num_in_line >= (num_since_start - 2)) {
-                    ++num_fours_player_1;
-                    winning_empty_cell_1 = last_empty_cell;
-                } else if(num_in_line <= -4
-                       && (num_in_line + num_since_start) <= 2) {
-                    ++num_fours_player_2;
-                    winning_empty_cell_2 = last_empty_cell;
-                }
-
-            /* yield a match of three nearby cells in a row */
-            } else if(num_since_start >= 4) {
-                if(num_in_line >= 3) {
-                    ++num_threes_player_1;
-                } else if(num_in_line <= -3) {
-                    ++num_threes_player_2;
-                }
-            }
+            eval_threat(
+                num_since_start,
+                num_in_line,
+                num_consecutive_empty,
+                last_empty_cell
+            );
 
             if(cell->player_id == NO_PLAYER) {
                 ++num_since_start;
@@ -85,35 +117,42 @@ static void eval_seqs(int i_start,
                 if(num_consecutive_empty > 1) {
                     num_in_line = 0;
                     num_since_start = 1;
-                } else if(num_since_start >= 6 && num_in_line < 4) {
+                } else if(num_since_start > 6 && num_in_line < 4) {
                     num_since_start = 1;
                 }
 
             /* current player chip, will either continue a line or break one */
             } else if(cell->player_id == PLAYER_1) {
-                num_consecutive_empty = 0;
-
                 if(num_in_line < 0) {
                     num_in_line = 1;
-                    num_since_start = 1;
+                    num_since_start = num_consecutive_empty > 0 ? 2 : 1;
                 } else {
                     ++num_in_line;
                     ++num_since_start;
                 }
 
-            /* opponent chip, will either continue a line or break one */
-            } else {
                 num_consecutive_empty = 0;
 
+            /* opponent chip, will either continue a line or break one */
+            } else {
                 if(num_in_line > 0) {
                     num_in_line = -1;
-                    num_since_start = 1;
+                    num_since_start = num_consecutive_empty > 0 ? 2 : 1;
                 } else {
                     --num_in_line;
                     ++num_since_start;
                 }
+
+                num_consecutive_empty = 0;
             }
         }
+
+        eval_threat(
+            num_since_start,
+            num_in_line,
+            num_consecutive_empty,
+            last_empty_cell
+        );
 
         i_start = MIN(MAX(0, i_start + i_start_incr), len - 1);
         j_start = MIN(MAX(0, j_start + j_start_incr), len - 1);
@@ -127,7 +166,9 @@ static void eval_seqs(int i_start,
 int minmax_evaluate(board_t *board,
                     const player_t max_player_id,
                     const player_t curr_player_id,
-                    const player_t winner_id) {
+                    const player_t winner_id,
+                    int *num_wins,
+                    int *num_losses) {
 
     /* information related to sequencing diagonals */
     const int diag_big_max = (BOARD_NUM_CELLS / 2) - BOARD_LENGTH;
@@ -136,7 +177,13 @@ int minmax_evaluate(board_t *board,
 
     /* there was a winner, return the score */
     if(NO_PLAYER != winner_id) {
-        return (max_player_id == winner_id) ? INT_MAX : INT_MIN;
+        if(max_player_id == winner_id) {
+            ++(*num_wins);
+            return INT_MAX;
+        } else {
+            ++(*num_losses);
+            return INT_MIN;
+        }
     }
 
     /* initialize the global vars */
@@ -166,8 +213,10 @@ int minmax_evaluate(board_t *board,
     /* score the current game board in terms of threats and double threats */
     if(PLAYER_1 == max_player_id) {
         if(num_fours_player_1 >= 2) { /* we have created a double threat */
+            ++(*num_wins);
             return INT_MAX;
         } else if(num_fours_player_2 >= 2) { /* opponent has created a d.t. */
+            ++(*num_losses);
             return INT_MIN;
         } else {
             return (int) (
@@ -178,14 +227,16 @@ int minmax_evaluate(board_t *board,
         }
     } else if(PLAYER_2 == max_player_id) {
         if(num_fours_player_2 >= 2) { /* we have created a d.t. */
+            ++(*num_wins);
             return INT_MAX;
         } else if(num_fours_player_1 >= 2) { /* opponent created a d.t. */
+            ++(*num_losses);
             return INT_MAX;
         } else {
             return (int) (
                 (pow(5, num_fours_player_2) -
-                pow(5, num_fours_player_1)) +
-                pow(3, num_threes_player_2)
+                 pow(5, num_fours_player_1)) +
+                 pow(3, num_threes_player_2)
             );
         }
     }
@@ -208,6 +259,10 @@ void yield_best_move(board_cell_t **cell, const player_t player_id) {
             *cell = winning_empty_cell_1;
         } else if(NULL != winning_empty_cell_2) { /* defend loss */
             *cell = winning_empty_cell_2;
+        } else if(NULL != blocking_empty_cell_1) { /* make double threat */
+            *cell = blocking_empty_cell_1;
+        } else if(NULL != blocking_empty_cell_2) { /* block soon-to-be D.T. */
+            *cell = blocking_empty_cell_2;
         }
 
     /* player 2's best move */
@@ -217,6 +272,10 @@ void yield_best_move(board_cell_t **cell, const player_t player_id) {
             *cell = winning_empty_cell_2;
         } else if(NULL != winning_empty_cell_1) { /* defend loss */
             *cell = winning_empty_cell_1;
+        } else if(NULL != blocking_empty_cell_2) { /* make double threat */
+            *cell = blocking_empty_cell_2;
+        } else if(NULL != blocking_empty_cell_1) { /* block soon-to-be D.T. */
+            *cell = blocking_empty_cell_1;
         }
     }
 }

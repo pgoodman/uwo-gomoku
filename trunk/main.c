@@ -65,7 +65,7 @@ static void print_board(void) {
  * num_wins - num_losses heuristic as a way to break min/max ties. Whether or
  * not this is a good heuristic is another question!
  */
-static void choose_move(board_cell_t **cell) {
+void choose_move(board_cell_t **cell) {
 
     ordered_cell_seq_t successors;
 
@@ -106,6 +106,7 @@ int main(const int argc, const char *argv[]) {
     player_t winner_id;
     board_cell_t *search_cell = NULL;
     board_cell_t *board_cell = NULL;
+    int foobar = 0;
 
     /* make sure the board length is legal */
     STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
@@ -145,7 +146,14 @@ int main(const int argc, const char *argv[]) {
          * immediately. We can do this with out evaluation function, i.e. we
          * evaluate the start state!
          */
-        minmax_evaluate(&search_board, player_id, player_id, NO_PLAYER);
+        minmax_evaluate(
+            &search_board,
+            player_id,
+            player_id,
+            NO_PLAYER,
+            &foobar,
+            &foobar
+        );
         yield_best_move(&search_cell, player_id);
 
         /* no such winning or block losing move exists. search for a move for
