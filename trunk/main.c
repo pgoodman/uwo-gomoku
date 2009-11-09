@@ -106,7 +106,6 @@ int main(const int argc, const char *argv[]) {
     player_t winner_id;
     board_cell_t *search_cell = NULL;
     board_cell_t *board_cell = NULL;
-    int foobar = 0;
 
     /* make sure the board length is legal */
     STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
@@ -143,18 +142,8 @@ int main(const int argc, const char *argv[]) {
         init_local_space(&search_board, player_id);
 
         /* search through the board for a winning or losing move and take it
-         * immediately. We can do this with out evaluation function, i.e. we
-         * evaluate the start state!
-         */
-        minmax_evaluate(
-            &search_board,
-            player_id,
-            player_id,
-            NO_PLAYER,
-            &foobar,
-            &foobar
-        );
-        yield_best_move(&search_cell, player_id);
+         * immediately. */
+        search_cell = yield_best_move(&search_board, player_id);
 
         /* no such winning or block losing move exists. search for a move for
          * approximately 8 seconds, after that give up and just use whatever

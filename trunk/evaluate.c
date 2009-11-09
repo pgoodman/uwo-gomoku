@@ -12,19 +12,14 @@
  * not a multi-threaded game :D */
 static board_t *game_board;
 
-static int num_fours_player_1 = 0;
-static int num_fours_player_2 = 0;
-
-static int num_threes_player_1 = 0;
-static int num_threes_player_2 = 0;
+static int num_fours_player[2] = {0, 0};
+static int num_threes_player[2] = {0, 0};
 
 /* keep track of winning cells */
-static board_cell_t *winning_empty_cell_1 = NULL;
-static board_cell_t *winning_empty_cell_2 = NULL;
+static board_cell_t *winning_empty_cell[2] = {NULL, NULL};
 
 /* keep track of blocking cells */
-static board_cell_t *blocking_empty_cell_1 = NULL;
-static board_cell_t *blocking_empty_cell_2 = NULL;
+static board_cell_t *blocking_empty_cell[2] = {NULL, NULL};
 
 /**
  * Recognize either a 4-threat or a 3-threat. That is, all 5-tuples with 4 chips
@@ -38,15 +33,15 @@ static void eval_threat(const int num_since_start,
     /* yield a match of four nearby cells in a row */
     if(num_since_start >= 5 && (num_since_start - num_in_line) > 0) {
         if(num_in_line >= 4 && num_in_line >= (num_since_start - 2)) {
-            ++num_fours_player_1;
-            if(NULL == winning_empty_cell_1) {
-                winning_empty_cell_1 = last_empty_cell;
+            ++num_fours_player[0];
+            if(NULL == winning_empty_cell[0]) {
+                winning_empty_cell[0] = last_empty_cell;
             }
         } else if(num_in_line <= -4
                && (num_in_line + num_since_start) <= 2) {
-            ++num_fours_player_2;
-            if(NULL == winning_empty_cell_2) {
-                winning_empty_cell_2 = last_empty_cell;
+            ++num_fours_player[1];
+            if(NULL == winning_empty_cell[1]) {
+                winning_empty_cell[1] = last_empty_cell;
             }
         }
     }
@@ -54,14 +49,14 @@ static void eval_threat(const int num_since_start,
     /* yield a match of three nearby cells in a row */
     if(num_since_start > 4 && num_consecutive_empty == 1) {
         if(num_in_line == 3) {
-            ++num_threes_player_1;
-            if(NULL == blocking_empty_cell_1) {
-                blocking_empty_cell_1 = last_empty_cell;
+            ++num_threes_player[0];
+            if(NULL == blocking_empty_cell[0]) {
+                blocking_empty_cell[0] = last_empty_cell;
             }
         } else if(num_in_line == -3) {
-            ++num_threes_player_2;
-            if(NULL == blocking_empty_cell_2) {
-                blocking_empty_cell_2 = last_empty_cell;
+            ++num_threes_player[1];
+            if(NULL == blocking_empty_cell[1]) {
+                blocking_empty_cell[1] = last_empty_cell;
             }
         }
     }
@@ -174,6 +169,7 @@ int minmax_evaluate(board_t *board,
     const int diag_big_max = (BOARD_NUM_CELLS / 2) - BOARD_LENGTH;
     const int diag_small_max = diag_big_max - 2;
     const int diag_off = (BOARD_LENGTH - WINNING_SEQ_LENGTH);
+    const int p = !(PLAYER_1 != max_player_id);
 
     /* there was a winner, return the score */
     if(NO_PLAYER != winner_id) {
@@ -188,12 +184,12 @@ int minmax_evaluate(board_t *board,
 
     /* initialize the global vars */
     game_board = board;
-    num_fours_player_1 = 0;
-    num_fours_player_2 = 0;
-    num_threes_player_1 = 0;
-    num_threes_player_2 = 0;
-    winning_empty_cell_1 = NULL;
-    winning_empty_cell_2 = NULL;
+    num_fours_player[0] = 0;
+    num_fours_player[1] = 0;
+    num_threes_player[0] = 0;
+    num_threes_player[1] = 0;
+    winning_empty_cell[0] = NULL;
+    winning_empty_cell[1] = NULL;
 
     /* find all the winning threats on the game board. given the design of
      * eval_seqs, when iterating over diagonal sequences, this can only do half
@@ -210,72 +206,95 @@ int minmax_evaluate(board_t *board,
     eval_seqs(0, WINNING_SEQ_LENGTH + 1, 1, -1, 0, 1, diag_big_max); /* / */
     eval_seqs(BOARD_LENGTH - 1, diag_off, -1, 1, 0, -1, diag_small_max); /* / */
 
-    /* score the current game board in terms of threats and double threats */
-    if(PLAYER_1 == max_player_id) {
-        if(num_fours_player_1 >= 2) { /* we have created a double threat */
-            ++(*num_wins);
-            return INT_MAX;
-        } else if(num_fours_player_2 >= 2) { /* opponent has created a d.t. */
-            ++(*num_losses);
-            return INT_MIN;
-        } else {
-            return (int) (
-                (pow(5, num_fours_player_1) -
-                pow(5, num_fours_player_2)) +
-                pow(3, num_threes_player_1)
-            );
-        }
-    } else if(PLAYER_2 == max_player_id) {
-        if(num_fours_player_2 >= 2) { /* we have created a d.t. */
-            ++(*num_wins);
-            return INT_MAX;
-        } else if(num_fours_player_1 >= 2) { /* opponent created a d.t. */
-            ++(*num_losses);
-            return INT_MAX;
-        } else {
-            return (int) (
-                (pow(5, num_fours_player_2) -
-                 pow(5, num_fours_player_1)) +
-                 pow(3, num_threes_player_2)
-            );
-        }
+    if(num_fours_player[p] >= 2) { /* we have created a double threat */
+        ++(*num_wins);
+        return INT_MAX;
+    } else if(num_fours_player[p] >= 2) { /* opponent has created a d.t. */
+        ++(*num_losses);
+        return INT_MIN;
+    } else {
+        return (int) (
+            pow(3, num_threes_player[p]) + pow(4, num_fours_player[p])
+        );
     }
 
     return 0;
 }
 
 /**
- * Yield a best move if there is one for the current player. Note: this *must*
- * be called after minimax_evaluate(). If no best move exists then NULL is set
- * as the value of the cell pointer pointed to.
+ * Yield a best move if there is one for the current player. This will look to
+ * see if we can immediately win, block an immediate win, block the construction
+ * of a double threat, or block the construction of a double threat created by
+ * the intersection of two double threats.
  */
-void yield_best_move(board_cell_t **cell, const player_t player_id) {
+board_cell_t *yield_best_move(board_t *board, const player_t player_id) {
 
-    *cell = NULL;
+    int foobar = 0;
+    board_cell_t *cell = NULL;
+    board_cell_t *max_cell = &(board->cells[BOARD_LENGTH - 1][BOARD_LENGTH - 1]);
+    const int p = !(PLAYER_1 == player_id);
+    const int op = 1 - p;
+    const player_t opponent_id = OPPONENT(player_id);
 
-    /* player 1's best move */
-    if(PLAYER_1 == player_id) {
-        if(NULL != winning_empty_cell_1) { /* take win */
-            *cell = winning_empty_cell_1;
-        } else if(NULL != winning_empty_cell_2) { /* defend loss */
-            *cell = winning_empty_cell_2;
-        } else if(NULL != blocking_empty_cell_1) { /* make double threat */
-            *cell = blocking_empty_cell_1;
-        } else if(NULL != blocking_empty_cell_2) { /* block soon-to-be D.T. */
-            *cell = blocking_empty_cell_2;
+    board_cell_t *best_cell = NULL;
+    int best_cell_importance = INT_MIN;
+    int importance;
+
+    minmax_evaluate(
+        board,
+        player_id,
+        player_id,
+        NO_PLAYER,
+        &foobar,
+        &foobar
+    );
+
+    if(NULL != winning_empty_cell[p]) { /* take win */
+        return winning_empty_cell[p];
+    } else if(NULL != winning_empty_cell[op]) { /* defend loss */
+        return winning_empty_cell[op];
+    } else if(NULL != blocking_empty_cell[p]) { /* make double threat */
+        return blocking_empty_cell[p];
+    } else if(NULL != blocking_empty_cell[op]) { /* block soon-to-be D.T. */
+        return blocking_empty_cell[op];
+    }
+
+    /* we haven't seen an immediate best move, so lets look to see if any of
+     * the total possible successors will create a double threat construction.
+     * Note: they won't win because otherwise we would have seen that!
+     */
+    for(cell = &(board->cells[0][0]); cell <= max_cell; ++cell) {
+        if(NO_PLAYER != cell->player_id) {
+            continue;
         }
 
-    /* player 2's best move */
-    } else if(PLAYER_2 == player_id) {
+        cell->player_id = opponent_id;
 
-        if(NULL != winning_empty_cell_2) { /* take win */
-            *cell = winning_empty_cell_2;
-        } else if(NULL != winning_empty_cell_1) { /* defend loss */
-            *cell = winning_empty_cell_1;
-        } else if(NULL != blocking_empty_cell_2) { /* make double threat */
-            *cell = blocking_empty_cell_2;
-        } else if(NULL != blocking_empty_cell_1) { /* block soon-to-be D.T. */
-            *cell = blocking_empty_cell_1;
+        /* evaluate the cell as if the opponent placed their chip there */
+        minmax_evaluate(
+            board,
+            player_id,
+            opponent_id,
+            NO_PLAYER,
+            &foobar,
+            &foobar
+        );
+
+        /* undo the chip placement */
+        cell->player_id = NO_PLAYER;
+
+        /* look to see if the opponent can construct a double threat or win
+         * from this sequence. */
+        if(num_threes_player[op] || num_fours_player[op]) {
+            importance = (int) (
+                pow(3, num_threes_player[op]) + pow(4, num_fours_player[op])
+            );
+            if(importance > best_cell_importance) {
+                best_cell_importance = importance;
+                best_cell = cell;
+            }
         }
     }
+
+    return best_cell;
 }

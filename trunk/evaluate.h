@@ -22,6 +22,6 @@ int minmax_evaluate(board_t *board,
                     int *num_wins,
                     int *num_losses);
 
-void yield_best_move(board_cell_t **cell, const player_t player_id);
+board_cell_t *yield_best_move(board_t *board, const player_t player_id);
 
 #endif /* EVALUATE_H_ */
