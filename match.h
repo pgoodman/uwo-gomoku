@@ -15,8 +15,7 @@
 #include "common.h"
 #include "board.h"
 
-void match_seq(board_cell_t **cell);
-
+void match_seq(board_cell_t **cell, const int increment_mult);
 int matched_win(void);
 
 #endif /* MATCH_H_ */

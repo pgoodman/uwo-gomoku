@@ -9,15 +9,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 #include <limits.h>
 
 #include "common.h"
 #include "board.h"
-#include "successors.h"
 #include "context.h"
-#include "match.h"
-#include "rate.h"
+#include "move.h"
 
 #if 1
 static void print_board(board_t *board) {
@@ -142,28 +139,6 @@ int main(const int argc, const char *argv[]) {
                 strlen(GAME_DRAW_MESSAGE)
             );
         }
-
-#if 0
-        init_local_space(&search_board, player_id);
-
-        /* search through the board for a winning or losing move and take it
-         * immediately. */
-        search_cell = yield_best_move(&search_board, player_id);
-
-        /* no such winning or block losing move exists. search for a move for
-         * approximately 8 seconds, after that give up and just use whatever
-         * cell we chose most recently. */
-        if(NULL == search_cell) {
-
-            /* go and search for a move until completion or until time runs
-             * out. */
-            timed_computation(
-                (timed_func_t *) &choose_move,
-                (void *) &search_cell,
-                MAX_SEARCH_TIME
-            );
-        }
-#endif
     }
 
     /* output the new board to the file */
