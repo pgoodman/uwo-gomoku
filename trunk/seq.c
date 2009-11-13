@@ -72,7 +72,7 @@ static void fill_all_seqs(void) {
 /**
  * Relate each cell to its four cell sequences.
  */
-static void relate_all_seqs(void) {
+static void map_cells_to_seqs(void) {
 
     extern board_cell_seq_t board_cell_seqs[];
 
@@ -127,7 +127,7 @@ static void relate_all_seqs(void) {
 void init_seqs(board_t *board) {
     first_cell = &(board->cells[0][0]);
     fill_all_seqs();
-    relate_all_seqs();
+    map_cells_to_seqs();
 }
 
 /**

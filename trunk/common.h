@@ -26,8 +26,8 @@
 #define GAME_DRAW_MESSAGE "I have drawn the game!"
 
 /* incremental threat scores to various types of threat sequences */
-#define IT_STRAIGHT_4 512
-#define IT_BROKEN_4 512
+#define IT_STRAIGHT_4 1024
+#define IT_BROKEN_4 1024
 #define IT_BROKEN_3 64
 #define IT_STRAIGHT_3 96
 #define IT_EXTENDED_3 128

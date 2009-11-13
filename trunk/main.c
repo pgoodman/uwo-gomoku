@@ -15,9 +15,8 @@
 #include "common.h"
 #include "board.h"
 #include "successors.h"
-#include "seq.h"
 #include "context.h"
-#include "match.h"
+#include "rate.h"
 
 /* main copy of the board from the file that will be put back to the file */
 static board_t board;
@@ -43,59 +42,16 @@ static void print_board(void) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
             cell = &(board.cells[i][j]);
             if(NO_PLAYER == cell->player_id) {
-                printf("%4d", (cell->rating[0] + cell->rating[1] + cell->rating[2]));
+                printf("%5d", (cell->rating[0] + cell->rating[1] + cell->rating[2]));
             } else if(PLAYER_1 == cell->player_id){
-                printf("   X");
+                printf("    X");
             } else {
-                printf("   O");
+                printf("    O");
             }
         }
         printf("\n");
     }
     printf("\n");
-}
-#endif
-
-#if 0
-/**
- * Choose a one of the immediate successors as a move to make. Note: this
- * implements the first MAX level of the min/max algorithm. This is intentional
- * as it allows us to exit this function early using context switching and still
- * get a move choice out of it. Also, this lets us use the extra
- * num_wins - num_losses heuristic as a way to break min/max ties. Whether or
- * not this is a good heuristic is another question!
- */
-void choose_move(board_cell_t **cell) {
-
-    ordered_cell_seq_t successors;
-
-    int curr_succ;
-    int minmax_val = INT_MIN;
-    int minmax_temp;
-    int win_diff = INT_MIN;
-    int win_diff_temp;
-
-    gen_successors(&search_board, &successors);
-
-    for(curr_succ = 0; curr_succ < successors.len; ++curr_succ) {
-
-        /* get the min/max value of this successor */
-        minmax_temp = search_for_move(
-            &search_board,
-            successors.cells[curr_succ],
-            player_id,
-            &win_diff_temp
-        );
-
-        /* replace the minimax value, even in the event of a tie. Note:
-         * there is no third-level tie breaker :P */
-        if(minmax_temp > minmax_val
-        || (minmax_temp == minmax_val && win_diff_temp > win_diff)) {
-            minmax_val = minmax_temp;
-            *cell = successors.cells[curr_succ];
-            win_diff = win_diff_temp;
-        }
-    }
 }
 #endif
 
@@ -142,7 +98,7 @@ int main(const int argc, const char *argv[]) {
     /* search for a move. */
     } else {
 
-        init_seqs(&board);
+        init_ratings(&board);
         print_board();
 
 #if 0
