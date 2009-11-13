@@ -21,6 +21,16 @@ static int compare_cell(const void *a, const void *b) {
 }
 
 /**
+ * Compare the importance ratings of two cells.
+ */
+static int compare_cell_ratings(const void *a, const void *b) {
+    board_cell_t *bb = (*(board_cell_t **) b);
+    board_cell_t *aa = (*(board_cell_t **) a);
+    return (bb->rating[0] + bb->rating[1] + bb->rating[2])
+         - (aa->rating[0] + aa->rating[1] + aa->rating[2]);
+}
+
+/**
  * Fill an ordered cell sequence with the most import MAX_SUCCESSORS_TO_SEARCH
  * cells in the board.
  *
@@ -48,7 +58,7 @@ void gen_successors(board_t *board,
         &(seq->cells[0]),
         (size_t) len,
         sizeof(board_cell_t *),
-        &compare_cell
+        (NO_PLAYER == player_id) ? &compare_cell_ratings : &compare_cell
     );
 
     seq->len = len;

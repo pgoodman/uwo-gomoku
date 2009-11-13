@@ -16,33 +16,18 @@
 #include "board.h"
 #include "successors.h"
 #include "context.h"
+#include "match.h"
 #include "rate.h"
 
-/* main copy of the board from the file that will be put back to the file */
-static board_t board;
-
-/* secondary copy of the board used for searching. this copy exists as the
- * search performs in-place modifications of the board as it goes along, and
- * search can also be abruptley stopped with an alarm and context switch, and
- * so maintaining a stack of changes to undo was not enough to guarantee that
- * only one move would ever be placed back into the board after we're done the
- * search. */
-static board_t search_board;
-
-/* the player id of the AI */
-static player_t player_id;
-static player_t opponent_id;
-static player_t winner_id = NO_PLAYER;
-
 #if 1
-static void print_board(void) {
+static void print_board(board_t *board) {
     int i;
     int j;
     board_cell_t *cell;
 
     for(i = 0; i < BOARD_LENGTH; ++i) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
-            cell = &(search_board.cells[i][j]);
+            cell = &(board->cells[i][j]);
             if(NO_PLAYER == cell->player_id) {
                 printf("%5d", (cell->rating[0] + cell->rating[1] + cell->rating[2]));
             } else if(PLAYER_1 == cell->player_id){
@@ -57,60 +42,30 @@ static void print_board(void) {
 }
 #endif
 
-static board_cell_t *make_move(void) {
-    ordered_cell_seq_t max_succ;
-    ordered_cell_seq_t min_succ;
 
-    const cell_rating_t win_score = MIN(IT_BROKEN_4, IT_STRAIGHT_4);
-    const cell_rating_t dt_score = MIN(IT_BROKEN_3, IT_EXTENDED_3);
-
-    board_cell_t **max_cell;
-    board_cell_t **min_cell;
-
-    init_ratings(&search_board);
-
-    /* we won't waste processing power needlessly making a move. */
-    if(matched_win()) {
-        return NULL;
-    }
-
-    gen_successors(&search_board, &max_succ, player_id);
-    gen_successors(&search_board, &min_succ, opponent_id);
-
-    max_cell = &(max_succ.cells[0]);
-    min_cell = &(min_succ.cells[0]);
-
-    /* can we make a winning move immediately? */
-    if((*max_cell)->rating[player_id] >= win_score) {
-        winner_id = player_id;
-        return *max_cell;
-
-    /* can we block a win? */
-    } else if((*min_cell)->rating[opponent_id] >= win_score) {
-
-        /* doesn't matter, we have lost anyway */
-        if((*(min_cell + 1))->rating[opponent_id] >= dt_score) {
-            winner_id = opponent_id;
-        }
-        return *min_cell;
-
-    /* can we make a double threat? */
-    } else if((*max_cell)->rating[player_id] >= dt_score) {
-        return *max_cell;
-
-    /* can we block a double threat? */
-    } else if((*min_cell)->rating[opponent_id] >= dt_score) {
-        return *min_cell;
-    }
-
-    return NULL;
-}
 
 /**
  * Start up the AI and have it choose a move to make.
  */
 int main(const int argc, const char *argv[]) {
 
+    /* main copy of the board from the file that will be put back to the file */
+    board_t board;
+
+    /* secondary copy of the board used for searching. this copy exists as the
+     * search performs in-place modifications of the board as it goes along,
+     * and search can also be abruptly stopped with an alarm and context
+     * switch, and so maintaining a stack of changes to undo was not enough to
+     * guarantee that only one move would ever be placed back into the board
+     * after we're done the search. */
+    board_t search_board;
+
+    /* the player id of the AI, other, and winner */
+    player_t player_id;
+    player_t opponent_id;
+    player_t winner_id = NO_PLAYER;
+
+    /* the board cell that we will place our chip in */
     board_cell_t *board_cell = NULL;
 
     /* make sure the board length is legal */
@@ -147,8 +102,14 @@ int main(const int argc, const char *argv[]) {
     /* search for a move. */
     } else {
 
-        board_cell = make_move();
-        print_board();
+        board_cell = make_move(
+            &search_board,
+            player_id,
+            opponent_id,
+            &winner_id
+        );
+
+        print_board(&search_board);
 
         /* this shouldn't happen, but it's worth checking... */
         if(NULL == board_cell) {
