@@ -19,6 +19,8 @@ typedef struct {
     int len;
 } ordered_cell_seq_t;
 
-void gen_successors(board_t *board, ordered_cell_seq_t *seq);
+void gen_successors(board_t *board,
+                    ordered_cell_seq_t *seq,
+                    const player_t player_id);
 
 #endif /* SUCCESSORS_H_ */
