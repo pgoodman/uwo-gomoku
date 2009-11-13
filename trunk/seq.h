@@ -19,7 +19,6 @@ typedef struct {
 
 /* globals */
 board_cell_seq_t board_cell_seqs[BOARD_NUM_SEQS];
-board_cell_seq_t *cell_to_seqs[BOARD_NUM_CELLS][4];
 
 /* functions */
 void init_seqs(board_t *board);

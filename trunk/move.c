@@ -67,8 +67,8 @@ board_cell_t *make_move(board_t *board,
         return NULL;
     }
 
-    gen_successors(&board, &max_succ, player_id);
-    gen_successors(&board, &min_succ, opponent_id);
+    gen_successors(board, &max_succ, player_id);
+    gen_successors(board, &min_succ, opponent_id);
 
     max_cell = &(max_succ.cells[0]);
     min_cell = &(min_succ.cells[0]);
@@ -90,6 +90,20 @@ board_cell_t *make_move(board_t *board,
     for(; i-- && NULL != *max_cell; ++max_cell) {
         move = *max_cell;
 
+        /* undo ratings pivoted at move */
+        unrate_pivoted_seqs(move);
+
+        /* rate the sequences pivoted at move */
+        move->player_id = opponent_id;
+        rate_pivoted_seqs(move);
+
+        printf("hello.\n");
+
+        /* undo the new ratings that were pivoted at move and re-do the
+         * old ones */
+        unrate_pivoted_seqs(move);
+        move->player_id = NO_PLAYER;
+        rate_pivoted_seqs(move);
     }
 
     return *max_cell;

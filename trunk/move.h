@@ -11,6 +11,10 @@
 
 #include "common.h"
 #include "board.h"
+#include "rate.h"
+#include "match.h"
+#include "seq.h"
+#include "successors.h"
 
 board_cell_t *make_move(board_t *board,
                         const player_t player_id,

@@ -10,7 +10,8 @@
 
 #define D(x) x
 
-static board_cell_t *empties[BOARD_LENGTH]; /* + extra padding :D */
+/* empty cells that we've seen when matching */
+static board_cell_t *empties[BOARD_LENGTH];
 static int num_empties = 0;
 
 /* statistics on matches */
@@ -27,12 +28,18 @@ static int interior_empty_offset = -1;
 static int first_chip_offset = -1;
 static player_t player_chips = NO_PLAYER;
 
+/* should we increment or decrement cell scores */
+static int mult = 1;
+
 /**
  * Update the match info given a the player id of the current cell.
  */
 static void update_pattern_info(board_cell_t *cell, const int i) {
 
     const player_t player_id = cell->player_id;
+
+    /* the pattern matcher is specific to sequences of length 5 */
+    STATIC_ASSERT(5 == WINNING_SEQ_LENGTH);
 
     /* empty cell */
     if(NO_PLAYER == player_id) {
@@ -153,7 +160,7 @@ static void match5(const int i) {
     }
 
     /* matched 5 in a row! */
-    num_wins[player_chips] += 1;
+    num_wins[player_chips] += mult * 1;
 }
 
 /**
@@ -175,8 +182,8 @@ static void match4(const int i) {
 
         /* matched 4, with one interior empty */
         D( printf("matched 4 (broken) \n"); )
-        num_almost_wins[player_chips] += 1;
-        empties[num_empties - 1]->rating[player_chips] += IT_BROKEN_4;
+        num_almost_wins[player_chips] += mult * 1;
+        empties[num_empties - 1]->rating[player_chips] += mult * IT_BROKEN_4;
 
         num_chips_in_seq -= 1;
         first_chip_offset += 1;
@@ -208,8 +215,8 @@ static void match4(const int i) {
 
         /* matched 4, with one exterior empty */
         D( printf("matched 4 (straight) \n"); )
-        num_almost_wins[player_chips] += 1;
-        empties[num_empties - 1]->rating[player_chips] += IT_STRAIGHT_4;
+        num_almost_wins[player_chips] += mult * 1;
+        empties[num_empties - 1]->rating[player_chips] += mult * IT_STRAIGHT_4;
 
         /* if there are leading empties then just skip over them */
         if(num_leading_empties) {
@@ -241,11 +248,11 @@ static void match3(const int i) {
     if(3 == num_interior_cells) {
 
         D( printf("matched 3 (straight extended) \n"); )
-        num_dt_constructs[player_chips] += 1;
+        num_dt_constructs[player_chips] += mult * 1;
 
-        empties[num_empties - 3]->rating[player_chips] += IT_EXTENDED_3;
-        empties[num_empties - 2]->rating[player_chips] += IT_EXTENDED_3;
-        empties[num_empties - 1]->rating[player_chips] += IT_EXTENDED_3;
+        empties[num_empties - 3]->rating[player_chips] += mult * IT_EXTENDED_3;
+        empties[num_empties - 2]->rating[player_chips] += mult * IT_EXTENDED_3;
+        empties[num_empties - 1]->rating[player_chips] += mult * IT_EXTENDED_3;
 
         /* update the leading cells */
         if(num_leading_empties) {
@@ -257,20 +264,20 @@ static void match3(const int i) {
     /* matched 3 with 1 leading and 1 tailing cells */
     if(1 == num_leading_empties && 1 == num_trailing_empties) {
 
-        num_dt_constructs[player_chips] += 1;
+        num_dt_constructs[player_chips] += mult * 1;
 
         /* matched 3, with 1 internal empty cell */
         if(4 == num_interior_cells) {
             D( printf("matched 3 (broken) \n"); )
-            empties[num_empties - 3]->rating[player_chips] += IT_BROKEN_3;
-            empties[num_empties - 2]->rating[player_chips] += IT_BROKEN_3;
-            empties[num_empties - 1]->rating[player_chips] += IT_BROKEN_3;
+            empties[num_empties - 3]->rating[player_chips] += mult * IT_BROKEN_3;
+            empties[num_empties - 2]->rating[player_chips] += mult * IT_BROKEN_3;
+            empties[num_empties - 1]->rating[player_chips] += mult * IT_BROKEN_3;
 
         /* matched 3, with 1 leading and tailing empty cell */
         } else {
             D( printf("matched 3 (straight) \n"); )
-            empties[num_empties - 2]->rating[player_chips] += IT_STRAIGHT_3;
-            empties[num_empties - 1]->rating[player_chips] += IT_STRAIGHT_3;
+            empties[num_empties - 2]->rating[player_chips] += mult * IT_STRAIGHT_3;
+            empties[num_empties - 1]->rating[player_chips] += mult * IT_STRAIGHT_3;
         }
     }
 }
@@ -279,8 +286,10 @@ static void match3(const int i) {
  * Perform pattern matching on a single sequence of null-terminated board cell
  * pointers.
  */
-void match_seq(board_cell_t **cell) {
+void match_seq(board_cell_t **cell, const int increment_mult) {
     int i;
+
+    mult = increment_mult;
 
     /* match patterns */
     for(i = 0, reset_match_info(); *cell != NULL; ++cell, ++i) {

@@ -40,7 +40,7 @@ static void rate_board(void) {
     board_cell_seq_t *seq;
 
     for(seq = &(board_cell_seqs[0]); i--; ++seq) {
-        match_seq(&(seq->cells[0]));
+        match_seq(&(seq->cells[0]), 1);
     }
 }
 
@@ -51,4 +51,28 @@ void init_ratings(board_t *board) {
     weight_board(board);
     init_seqs(board);
     rate_board();
+}
+
+/**
+ * Rate the sequences that intersect a given cell.
+ */
+static void rate_seq(board_cell_t *pivot_cell, const int mult) {
+    int i;
+    for(i = 0; i < 4; ++i) {
+        match_seq(cell_sequence(pivot_cell, i), mult);
+    }
+}
+
+/**
+ * Rate the cell sequences pivoted at a given cell.
+ */
+void rate_pivoted_seqs(board_cell_t *pivot_cell) {
+    rate_seq(pivot_cell, 1);
+}
+
+/**
+ * Un-rate the cell sequences pivoted at a given cell.
+ */
+void unrate_pivoted_seqs(board_cell_t *pivot_cell) {
+    rate_seq(pivot_cell, -1);
 }

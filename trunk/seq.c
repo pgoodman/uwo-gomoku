@@ -8,7 +8,9 @@
 
 #include "seq.h"
 
-/* module-locals */
+/* map cells to cell sequences */
+static board_cell_seq_t *cell_to_seqs[BOARD_NUM_CELLS][4];
+
 static board_cell_seq_t *curr_seq;
 static board_cell_t *first_cell;
 
@@ -135,8 +137,6 @@ void init_seqs(board_t *board) {
  * if no such sequence exists. There are at most 4 sequences.
  */
 board_cell_t **cell_sequence(board_cell_t *cell, const int i) {
-    extern board_cell_seq_t *cell_to_seqs[BOARD_NUM_CELLS][4];
-
     if(i < 0 || i >= 4) {
         return NULL;
     }
