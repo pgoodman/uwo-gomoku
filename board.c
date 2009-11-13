@@ -21,9 +21,6 @@ int read_board(board_t *board) {
     char c; /* current character in the buffer */
     board_cell_t *cell; /* current cell in the board */
 
-    const cell_rating_t o = BOARD_CENTER;
-    const cell_rating_t t = (cell_rating_t) ((o * o) / 2);
-
     DYNAMIC_ASSERT(NULL != board);
 
     board->num_empty_cells = BOARD_NUM_CELLS;
@@ -63,9 +60,7 @@ int read_board(board_t *board) {
                 continue;
             }
 
-            cell->rating[NO_PLAYER] = (cell_rating_t) (
-                t - ((((i - o) * (i - o)) + ((j - o) * (j - o))) / 4)
-            );
+            cell->rating[NO_PLAYER] = 0;
             cell->rating[PLAYER_1] = 0;
             cell->rating[PLAYER_2] = 0;
 
@@ -89,10 +84,8 @@ int put_board(board_t *board) {
     DYNAMIC_ASSERT(NULL != board);
 
     /* fill the buffer */
-    for(i = 0; i < BOARD_LENGTH; ++i) {
-        for(j = 0; j < BOARD_LENGTH; ++j) {
-
-            cell = &(board->cells[i][j]);
+    for(i = 0, cell = &(board->cells[0][0]); i < BOARD_LENGTH; ++i) {
+        for(j = 0; j < BOARD_LENGTH; ++j, ++cell) {
 
             /* type safety is fun :D */
             if(cell->player_id == NO_PLAYER) {

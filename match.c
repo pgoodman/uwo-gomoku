@@ -8,7 +8,10 @@
 
 #include "match.h"
 
+#define D(x) x
+
 static board_cell_t *empties[BOARD_LENGTH]; /* + extra padding :D */
+static int num_empties = 0;
 
 /* statistics on matches */
 static int num_wins[3] = {0, 0, 0};
@@ -35,7 +38,7 @@ static void update_pattern_info(board_cell_t *cell, const int i) {
     if(NO_PLAYER == player_id) {
 
         /* record for later ;) */
-        empties[i] = cell;
+        empties[num_empties++] = cell;
 
         /* this is the nth empty cell in a row. */
         if(num_trailing_empties) {
@@ -63,10 +66,14 @@ static void update_pattern_info(board_cell_t *cell, const int i) {
         num_cells_in_seq += 1;
         num_trailing_empties += 1;
 
+        /* cut the leading empties short */
+        if(num_leading_empties >= 2) {
+            num_cells_in_seq = num_cells_in_seq - (num_leading_empties - 2);
+            num_leading_empties = 2;
+        }
+
     /* player 1 or 2 chip */
     } else {
-
-        empties[i] = NULL;
 
         /* we are continuing as part of a sequence or this is the first
          * chip that we have seen. */
@@ -115,6 +122,7 @@ static void update_pattern_info(board_cell_t *cell, const int i) {
  * Reset the match info.
  */
 static void reset_match_info(void) {
+    num_empties = 0;
     num_cells_in_seq = 0;
     num_chips_in_seq = 0;
     num_trailing_empties = 0;
@@ -134,6 +142,8 @@ static void match5(const int i) {
     if(5 != num_chips_in_seq || 5 != num_interior_cells) {
         return;
     }
+
+    D( printf("matched 5 \n"); )
 
     num_cells_in_seq -= 1;
     if(num_leading_empties) {
@@ -164,8 +174,9 @@ static void match4(const int i) {
     if(5 == num_interior_cells) {
 
         /* matched 4, with one interior empty */
+        D( printf("matched 4 (broken) \n"); )
         num_almost_wins[player_chips] += 1;
-        empties[interior_empty_offset]->rating[player_chips] += IT_BROKEN_4;
+        empties[num_empties - 1]->rating[player_chips] += IT_BROKEN_4;
 
         num_chips_in_seq -= 1;
         first_chip_offset += 1;
@@ -196,12 +207,9 @@ static void match4(const int i) {
     } else if(4 == num_interior_cells) {
 
         /* matched 4, with one exterior empty */
+        D( printf("matched 4 (straight) \n"); )
         num_almost_wins[player_chips] += 1;
-        if(num_trailing_empties) {
-            empties[i]->rating[player_chips] += IT_STRAIGHT_4;
-        } else {
-            empties[i - 4]->rating[player_chips] += IT_STRAIGHT_4;
-        }
+        empties[num_empties - 1]->rating[player_chips] += IT_STRAIGHT_4;
 
         /* if there are leading empties then just skip over them */
         if(num_leading_empties) {
@@ -229,34 +237,41 @@ static void match3(const int i) {
         return;
     }
 
+    /* matched 3 with 1 leading and 2 tailing empty cells */
+    if(3 == num_interior_cells) {
+
+        D( printf("matched 3 (straight extended) \n"); )
+        num_dt_constructs[player_chips] += 1;
+
+        empties[num_empties - 3]->rating[player_chips] += IT_EXTENDED_3;
+        empties[num_empties - 2]->rating[player_chips] += IT_EXTENDED_3;
+        empties[num_empties - 1]->rating[player_chips] += IT_EXTENDED_3;
+
+        /* update the leading cells */
+        if(num_leading_empties) {
+            num_leading_empties -= 1;
+            num_cells_in_seq -= 1;
+        }
+    }
+
+    /* matched 3 with 1 leading and 1 tailing cells */
     if(1 == num_leading_empties && 1 == num_trailing_empties) {
 
         num_dt_constructs[player_chips] += 1;
 
         /* matched 3, with 1 internal empty cell */
         if(4 == num_interior_cells) {
-
-            empties[i - 5]->rating[player_chips] += IT_BROKEN_3;
-            empties[interior_empty_offset]->rating[player_chips] += IT_BROKEN_3;
-            empties[i]->rating[player_chips] += IT_BROKEN_3;
+            D( printf("matched 3 (broken) \n"); )
+            empties[num_empties - 3]->rating[player_chips] += IT_BROKEN_3;
+            empties[num_empties - 2]->rating[player_chips] += IT_BROKEN_3;
+            empties[num_empties - 1]->rating[player_chips] += IT_BROKEN_3;
 
         /* matched 3, with 1 leading and tailing empty cell */
         } else {
-            empties[i - 4]->rating[player_chips] += IT_STRAIGHT_3;
-            empties[i]->rating[player_chips] += IT_STRAIGHT_3;
+            D( printf("matched 3 (straight) \n"); )
+            empties[num_empties - 2]->rating[player_chips] += IT_STRAIGHT_3;
+            empties[num_empties - 1]->rating[player_chips] += IT_STRAIGHT_3;
         }
-
-    /* matched 3 with 1 leading and 2 tailing empty cells */
-    } else if(3 == num_interior_cells) {
-        num_dt_constructs[player_chips] += 1;
-        empties[i - 5]->rating[player_chips] += IT_EXTENDED_3;
-
-        if(num_trailing_empties > 1) {
-            empties[i - 1]->rating[player_chips] += IT_EXTENDED_3;
-        } else {
-            empties[i - 4]->rating[player_chips] += IT_EXTENDED_3;
-        }
-        empties[i]->rating[player_chips] += IT_EXTENDED_3;
     }
 }
 
@@ -267,6 +282,7 @@ static void match3(const int i) {
 void match_seq(board_cell_t **cell) {
     int i;
 
+    /* match patterns */
     for(i = 0, reset_match_info(); *cell != NULL; ++cell, ++i) {
         update_pattern_info(*cell, i);
         match5(i);

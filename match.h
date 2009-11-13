@@ -9,6 +9,9 @@
 #ifndef MATCH_H_
 #define MATCH_H_
 
+#include <stdio.h>
+#include <string.h>
+
 #include "common.h"
 #include "board.h"
 
