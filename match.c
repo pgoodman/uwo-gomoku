@@ -290,3 +290,11 @@ void match_seq(board_cell_t **cell) {
         match3(i);
     }
 }
+
+/**
+ * Was a win matched? If so, return the number of total wins matched, otherwise
+ * zero.
+ */
+int matched_win(void) {
+    return (num_wins[1] + num_wins[2]);
+}

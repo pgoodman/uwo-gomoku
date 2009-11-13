@@ -15,6 +15,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define FILE_PUT_CHMOD 0654
+
 int file_get_contents(const char *name,
                       char *buffer,
                       const size_t min_len,

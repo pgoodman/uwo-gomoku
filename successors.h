@@ -15,7 +15,7 @@
 #include "board.h"
 
 typedef struct {
-    board_cell_t *cells[MAX_SUCCESSORS_TO_SEARCH];
+    board_cell_t *cells[BOARD_NUM_CELLS + 1]; /* trailing null */
     int len;
 } ordered_cell_seq_t;
 
