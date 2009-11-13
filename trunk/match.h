@@ -17,4 +17,6 @@
 
 void match_seq(board_cell_t **cell);
 
+int matched_win(void);
+
 #endif /* MATCH_H_ */

@@ -29,12 +29,8 @@ static int compare_cell(const void *a, const void *b) {
 void gen_successors(board_t *board,
                     ordered_cell_seq_t *seq,
                     const player_t player_id) {
-
     int len = 0;
-    board_cell_t *all[BOARD_NUM_CELLS];
-    board_cell_t **each = &(all[0]);
-
-    board_cell_t **cells = &(seq->cells[0]);
+    board_cell_t **each = &(seq->cells[0]);
     board_cell_t *cell = &(board->cells[0][0]);
     board_cell_t *cell_max = cell + BOARD_NUM_CELLS;
 
@@ -49,16 +45,12 @@ void gen_successors(board_t *board,
     /* sort the cell pointers according to the cell importance rating */
     which_player = player_id;
     qsort(
-        &(all[0]),
+        &(seq->cells[0]),
         (size_t) len,
         sizeof(board_cell_t *),
         &compare_cell
     );
 
-    /* copy a few cell pointers into the ordered sequence. */
-    len = seq->len = MIN(len, MAX_SUCCESSORS_TO_SEARCH);
-    each = &(all[0]);
-    for(; len; --len) {
-        *(cells++) = *(each++);
-    }
+    seq->len = len;
+    seq->cells[len] = NULL; /* add in the trailing null */
 }
