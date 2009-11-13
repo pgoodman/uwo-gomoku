@@ -12,7 +12,10 @@
  * Compare the importance ratings of two cells.
  */
 static int compare_cell(const void *a, const void *b) {
-    return (*(board_cell_t **) b)->rating - (*(board_cell_t **) a)->rating;
+    board_cell_t *bb = (*(board_cell_t **) b);
+    board_cell_t *aa = (*(board_cell_t **) a);
+    return (bb->rating[0] + bb->rating[1] + bb->rating[2])
+         - (aa->rating[0] + aa->rating[1] + aa->rating[2]);
 }
 
 /**

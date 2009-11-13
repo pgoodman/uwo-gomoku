@@ -25,16 +25,21 @@
 #define GAME_WON_MESSAGE "I have won the game!"
 #define GAME_DRAW_MESSAGE "I have drawn the game!"
 
+/* incremental threat scores to various types of threat sequences */
+#define IT_STRAIGHT_4 512
+#define IT_BROKEN_4 512
+#define IT_BROKEN_3 64
+#define IT_STRAIGHT_3 96
+#define IT_EXTENDED_3 128
+
 /* other */
-#define THREAT_BASE 4
-#define BENEFIT_BASE 4
 #define LOCAL_SPACE 4
-#define CELL_WEIGHT_INCREMENT 1
-#define MAX_EVALUATION 99999
 
 /* computed macros */
 #define BOARD_NUM_CELLS (BOARD_LENGTH * BOARD_LENGTH)
+#define BOARD_TOTAL_DIAGS (BOARD_LENGTH + BOARD_LENGTH - 1)
 #define BOARD_NUM_DIAGONALS ((BOARD_LENGTH - WINNING_SEQ_LENGTH) * 2 + 1)
+#define BOARD_NUM_SEQS (2 * BOARD_LENGTH + 2 * BOARD_NUM_DIAGONALS)
 #define BOARD_CENTER ((int) (BOARD_LENGTH / 2))
 #define BOARD_MIN_BUFFER_SIZE (BOARD_NUM_CELLS * 2)
 #define BOARD_BUFFER_SIZE (BOARD_MIN_BUFFER_SIZE + 2 * BOARD_LENGTH)
@@ -50,9 +55,9 @@
 
 /* types */
 typedef enum {
-    NO_PLAYER,
-    PLAYER_1,
-    PLAYER_2
+    NO_PLAYER = 0,
+    PLAYER_1 = 1,
+    PLAYER_2 = 2
 } player_t;
 
 typedef unsigned int cell_rating_t;
