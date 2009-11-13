@@ -63,9 +63,11 @@ int read_board(board_t *board) {
                 continue;
             }
 
-            cell->rating = (cell_rating_t) (
+            cell->rating[NO_PLAYER] = (cell_rating_t) (
                 t - ((((i - o) * (i - o)) + ((j - o) * (j - o))) / 4)
             );
+            cell->rating[PLAYER_1] = 0;
+            cell->rating[PLAYER_2] = 0;
 
             ++j;
         }

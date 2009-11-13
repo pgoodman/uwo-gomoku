@@ -14,11 +14,10 @@
 
 #include "common.h"
 #include "board.h"
-#include "localspace.h"
 #include "successors.h"
-#include "search.h"
+#include "seq.h"
 #include "context.h"
-#include "evaluate.h"
+#include "match.h"
 
 /* main copy of the board from the file that will be put back to the file */
 static board_t board;
@@ -34,7 +33,7 @@ static board_t search_board;
 /* the player id of the AI */
 static player_t player_id;
 
-#if 0
+#if 1
 static void print_board(void) {
     int i;
     int j;
@@ -44,7 +43,7 @@ static void print_board(void) {
         for(j = 0; j < BOARD_LENGTH; ++j) {
             cell = &(board.cells[i][j]);
             if(NO_PLAYER == cell->player_id) {
-                printf("%4d", cell->rating);
+                printf("%4d", (cell->rating[0] + cell->rating[1] + cell->rating[2]));
             } else if(PLAYER_1 == cell->player_id){
                 printf("   X");
             } else {
@@ -57,6 +56,7 @@ static void print_board(void) {
 }
 #endif
 
+#if 0
 /**
  * Choose a one of the immediate successors as a move to make. Note: this
  * implements the first MAX level of the min/max algorithm. This is intentional
@@ -97,14 +97,17 @@ void choose_move(board_cell_t **cell) {
         }
     }
 }
+#endif
 
 /**
  * Start up the AI and have it choose a move to make.
  */
 int main(const int argc, const char *argv[]) {
 
+#if 0
     player_t winner_id;
     board_cell_t *search_cell = NULL;
+#endif
     board_cell_t *board_cell = NULL;
 
     /* make sure the board length is legal */
@@ -139,6 +142,10 @@ int main(const int argc, const char *argv[]) {
     /* search for a move. */
     } else {
 
+        init_seqs(&board);
+        print_board();
+
+#if 0
         init_local_space(&search_board, player_id);
 
         /* search through the board for a winning or losing move and take it
@@ -188,10 +195,11 @@ int main(const int argc, const char *argv[]) {
                 strlen(GAME_DRAW_MESSAGE)
             );
         }
+#endif
     }
 
     /* output the new board to the file */
-    if(!put_board(&board)) {
+    if(0 && !put_board(&board)) {
         DIE("Unable to output the board.\n");
     }
 
