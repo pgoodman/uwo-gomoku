@@ -12,10 +12,6 @@
 #include <assert.h>
 
 /* configuration macros */
-#define MAX_SEARCH_TIME 9 /* time limit for solution searching */
-#define MAX_SEARCH_DEPTH 6 /* depth-limit */
-#define MAX_SUCCESSORS_TO_SEARCH 200 /* node breadth limit */
-
 #define WINNING_SEQ_LENGTH 5
 
 #define BOARD_LENGTH 15 /* default board width/height */
@@ -35,9 +31,6 @@
 #define IT_EXTENDED_3 128
 #define IT_EXTENDED_3_MID 256
 #define IT_STRAIGHT_3 64
-
-/* other */
-#define LOCAL_SPACE 4
 
 /* computed macros */
 #define BOARD_NUM_CELLS (BOARD_LENGTH * BOARD_LENGTH)
