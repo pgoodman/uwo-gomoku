@@ -14,9 +14,11 @@
 #include "seq.h"
 #include "match.h"
 
-void init_ratings(board_t *board);
+#define RATE_CHIPS 1
+#define IGNORE_CHIPS 0
 
-void rate_pivoted_seqs(board_cell_t *pivot_cell);
-void unrate_pivoted_seqs(board_cell_t *pivot_cell);
+void init_ratings(board_t *board);
+void rate_pivoted_seqs(board_cell_t *pivot_cell, const int rate_chips);
+void unrate_pivoted_seqs(board_cell_t *pivot_cell, const int rate_chips);
 
 #endif /* RATING_H_ */

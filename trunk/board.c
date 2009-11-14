@@ -60,6 +60,7 @@ int read_board(board_t *board) {
                 continue;
             }
 
+            cell->chip_rating = 0;
             cell->rating[NO_PLAYER] = 0;
             cell->rating[PLAYER_1] = 0;
             cell->rating[PLAYER_2] = 0;
