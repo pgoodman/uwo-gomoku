@@ -97,22 +97,23 @@ board_cell_t *make_move(board_t *board,
 
     ordered_cell_seq_t max_succ;
     ordered_cell_seq_t min_succ;
-
+    /*
     ordered_cell_seq_t max_move_succ;
     ordered_cell_seq_t min_move_succ;
-
+    */
     board_cell_t **max_cell;
     board_cell_t **min_cell;
 
 
     board_cell_t *max_move;
     board_cell_t *min_move;
-    board_cell_t *move;
+    board_cell_t *move; /*
     board_cell_t *result_move;
 
-    int num_succ;
     int best = 0;
     int result_best;
+    */
+    int num_succ;
 
     /* we won't waste processing power needlessly making a move. */
     if(matched_win()) {
@@ -158,21 +159,21 @@ board_cell_t *make_move(board_t *board,
     /* order the moves according to their total importance
      * (weight + player 1 rating + player 2 rating), and then simulate null
      * moves on those cells. */
-    num_succ = 50; /*MIN(max_succ.len, min_succ.len);*/
+    num_succ = MIN(max_succ.len, min_succ.len);
     for(; num_succ--; ++max_cell, ++min_cell) {
 
         max_move = *max_cell;
         min_move = *min_cell;
 
         /* make our opponents move */
-        unrate_pivoted_seqs(min_move);
+        unrate_pivoted_seqs(min_move, IGNORE_CHIPS);
         min_move->player_id = opponent_id;
-        rate_pivoted_seqs(min_move);
+        rate_pivoted_seqs(min_move, RATE_CHIPS);
 
         D( printf("\t looking for opponent best move. \n"); )
 
         /* find the opponents best follow-up move */
-        gen_successors(board, &min_move_succ, NO_PLAYER);
+        /*gen_successors(board, &min_move_succ, NO_PLAYER);
         result_move = min_move_succ.cells[0];
         result_best = result_move->rating[0]
                     + result_move->rating[1]
@@ -184,24 +185,24 @@ board_cell_t *make_move(board_t *board,
         }
 
         D( printf("\t\t opponent move analyzed. \n"); )
-
+        */
         /* undo our opponents move and now make ours */
-        unrate_pivoted_seqs(min_move);
+        unrate_pivoted_seqs(min_move, IGNORE_CHIPS);
         min_move->player_id = NO_PLAYER;
 
         /* only undo/redo if the cells are not the same */
-        if(1 || max_move != min_move) {
-            rate_pivoted_seqs(min_move);
-            unrate_pivoted_seqs(max_move);
+        if(max_move != min_move) {
+            rate_pivoted_seqs(min_move, IGNORE_CHIPS);
+            unrate_pivoted_seqs(max_move, IGNORE_CHIPS);
         }
 
         max_move->player_id = player_id;
-        rate_pivoted_seqs(max_move);
+        rate_pivoted_seqs(max_move, RATE_CHIPS);
 
         D( printf("\t looking for AIs best move. \n"); )
 
         /* find our best follow-up move */
-        gen_successors(board, &max_move_succ, NO_PLAYER);
+        /*gen_successors(board, &max_move_succ, NO_PLAYER);
         result_move = max_move_succ.cells[0];
         result_best = result_move->rating[0]
                     + result_move->rating[1]
@@ -213,16 +214,19 @@ board_cell_t *make_move(board_t *board,
         }
 
         D( printf("\t\t AI move analyzed. \n"); )
-
+        */
         /* undo our move */
-        unrate_pivoted_seqs(max_move);
+        unrate_pivoted_seqs(max_move, IGNORE_CHIPS);
         max_move->player_id = NO_PLAYER;
-        rate_pivoted_seqs(max_move);
+        rate_pivoted_seqs(max_move, IGNORE_CHIPS);
     }
 
     D( printf("move chosen. \n"); )
 
-    return move;
+    /* take the maximum rated future chip */
+    gen_successors(board, &max_succ, NO_PLAYER);
+
+    return max_succ.cells[0];
 
 #if 0
     gen_successors(board, &min_succ, opponent_id);

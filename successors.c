@@ -11,23 +11,23 @@
 static player_t which_player;
 
 /**
- * Compare the importance ratings of two cells.
+ * Compare the importance ratings of two empty cells.
  */
 static int compare_cell(const void *a, const void *b) {
     board_cell_t *bb = (*(board_cell_t **) b);
     board_cell_t *aa = (*(board_cell_t **) a);
-    return (bb->rating[0] + bb->rating[which_player])
-         - (aa->rating[0] + aa->rating[which_player]);
+    return (bb->rating[0] + bb->rating[which_player] + bb->chip_rating)
+         - (aa->rating[0] + aa->rating[which_player] + aa->chip_rating);
 }
 
 /**
- * Compare the importance ratings of two cells.
+ * Compare the importance ratings of two empty cells.
  */
 static int compare_cell_ratings(const void *a, const void *b) {
     board_cell_t *bb = (*(board_cell_t **) b);
     board_cell_t *aa = (*(board_cell_t **) a);
-    return (bb->rating[0] + bb->rating[1] + bb->rating[2])
-         - (aa->rating[0] + aa->rating[1] + aa->rating[2]);
+    return (bb->rating[0] + bb->rating[1] + bb->rating[2] + bb->chip_rating)
+         - (aa->rating[0] + aa->rating[1] + aa->rating[2] + aa->chip_rating);
 }
 
 /**

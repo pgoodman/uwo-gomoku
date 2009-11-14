@@ -27,6 +27,7 @@
 #define GAME_LOST_MESSAGE "I have lost the game."
 
 /* incremental threat scores to various types of threat sequences */
+#define IT_STRAIGHT_5 1280
 #define IT_STRAIGHT_4 1024
 #define IT_BROKEN_4 1024
 #define IT_BROKEN_3 128

@@ -16,6 +16,7 @@
 typedef struct {
     player_t player_id;
     cell_rating_t rating[3];
+    cell_rating_t chip_rating;
     /*cell_rating_t player_1;
     cell_rating_t player_2;
     cell_rating_t weight;*/
