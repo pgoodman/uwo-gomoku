@@ -14,7 +14,7 @@
 /* configuration macros */
 #define MAX_SEARCH_TIME 9 /* time limit for solution searching */
 #define MAX_SEARCH_DEPTH 6 /* depth-limit */
-#define MAX_SUCCESSORS_TO_SEARCH 50 /* node breadth limit */
+#define MAX_SUCCESSORS_TO_SEARCH 200 /* node breadth limit */
 
 #define WINNING_SEQ_LENGTH 5
 
@@ -30,7 +30,9 @@
 #define IT_STRAIGHT_4 1024
 #define IT_BROKEN_4 1024
 #define IT_BROKEN_3 128
+#define IT_BROKEN_3_MID 256
 #define IT_EXTENDED_3 128
+#define IT_EXTENDED_3_MID 256
 #define IT_STRAIGHT_3 64
 
 /* other */
