@@ -13,7 +13,6 @@
 
 #include "common.h"
 #include "board.h"
-#include "context.h"
 #include "move.h"
 
 #if 0
@@ -103,46 +102,12 @@ int main(const int argc, const char *argv[]) {
     /* search for a move. */
     } else {
 
-        init_ratings(&search_board);
-        /*print_board(&search_board);
-        printf("\n");*/
-#if 0
-        board_cell = &(search_board.cells[BOARD_CENTER][BOARD_CENTER]);
-
-        print_board(&search_board);
-
-        unrate_pivoted_seqs(board_cell);
-        board_cell->player_id = PLAYER_1;
-        rate_pivoted_seqs(board_cell);
-
-        print_board(&search_board);
-
-        unrate_pivoted_seqs(board_cell);
-        board_cell->player_id = PLAYER_2;
-        rate_pivoted_seqs(board_cell);
-
-        print_board(&search_board);
-
-        unrate_pivoted_seqs(board_cell);
-        board_cell->player_id = NO_PLAYER;
-        rate_pivoted_seqs(board_cell);
-
-        print_board(&search_board);
-        exit(1);
-#endif
-
         board_cell = make_move(
             &search_board,
             player_id,
             opponent_id,
             &winner_id
         );
-
-        /*
-        board_cell->player_id = player_id;
-        print_board(&search_board);
-        exit(1);
-        */
 
         /* this shouldn't happen, but it's worth checking... */
         if(NULL == board_cell) {
