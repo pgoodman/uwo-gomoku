@@ -40,7 +40,7 @@ static void fill_seqs(int i_start,
             i >= 0 && i < len && j >= 0 && j < len;
             i += i_incr, j += j_incr, ++k, ++cell) {
 
-            *cell = first_cell + ((i * BOARD_LENGTH) + j);
+            *cell = first_cell + ((i * len) + j);
         }
 
         *cell = NULL; /* trailing null */
@@ -63,6 +63,8 @@ static void fill_all_seqs(void) {
     const int diag_off = (BOARD_LENGTH - WINNING_SEQ_LENGTH);
 
     curr_seq = &(board_cell_seqs[0]);
+
+    /* fill the sequences */
     fill_seqs(0, 0, 0, 1, 1, 0, BOARD_NUM_CELLS); /* - */
     fill_seqs(0, 0, 1, 0, 0, 1, BOARD_NUM_CELLS); /* | */
     fill_seqs(0, diag_off, 1, 1, 0, -1, diag_big_max); /* \ */

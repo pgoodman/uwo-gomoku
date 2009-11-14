@@ -9,14 +9,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <limits.h>
+#include <time.h>
 
 #include "common.h"
 #include "board.h"
 #include "context.h"
 #include "move.h"
 
-#if 1
+#if 0
 static void print_board(board_t *board) {
     int i;
     int j;
@@ -65,6 +65,9 @@ int main(const int argc, const char *argv[]) {
     /* the board cell that we will place our chip in */
     board_cell_t *board_cell = NULL;
 
+    /* how long it takes to run the program. */
+    time_t duration = time(NULL);
+
     /* make sure the board length is legal */
     STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
 
@@ -99,15 +102,45 @@ int main(const int argc, const char *argv[]) {
     /* search for a move. */
     } else {
 
+        init_ratings(&search_board);
+#if 0
+        board_cell = &(search_board.cells[BOARD_CENTER][BOARD_CENTER]);
+
+        print_board(&search_board);
+
+        unrate_pivoted_seqs(board_cell);
+        board_cell->player_id = PLAYER_1;
+        rate_pivoted_seqs(board_cell);
+
+        print_board(&search_board);
+
+        unrate_pivoted_seqs(board_cell);
+        board_cell->player_id = PLAYER_2;
+        rate_pivoted_seqs(board_cell);
+
+        print_board(&search_board);
+
+        unrate_pivoted_seqs(board_cell);
+        board_cell->player_id = NO_PLAYER;
+        rate_pivoted_seqs(board_cell);
+
+        print_board(&search_board);
+        exit(1);
+#endif
+        /*
+        print_board(&search_board);
+        */
         board_cell = make_move(
             &search_board,
             player_id,
             opponent_id,
             &winner_id
         );
-
+        /*
         print_board(&search_board);
 
+        exit(1);
+        */
         /* this shouldn't happen, but it's worth checking... */
         if(NULL == board_cell) {
             DIE("No cell was chosen as the next move.\n");
@@ -145,6 +178,13 @@ int main(const int argc, const char *argv[]) {
     if(!put_board(&board)) {
         DIE("Unable to output the board.\n");
     }
+
+    /* print out how long running the AI took */
+    fprintf(
+        stdout,
+        "\nCompleted in %d seconds. \n",
+        (int) (time(NULL) - duration)
+    );
 
     return 1;
 }

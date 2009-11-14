@@ -8,7 +8,8 @@
 
 #include "match.h"
 
-#define D(x) x
+#define D(x)
+#define U(x)
 
 /* empty cells that we've seen when matching */
 static board_cell_t *empties[BOARD_LENGTH];
@@ -245,13 +246,13 @@ static void match3(const int i) {
     }
 
     /* matched 3 with 1 leading and 2 tailing empty cells */
-    if(3 == num_interior_cells) {
+    if(3 == num_interior_cells && num_cells_in_seq >= 6) {
 
         D( printf("matched 3 (straight extended) \n"); )
         num_dt_constructs[player_chips] += mult * 1;
 
         empties[num_empties - 3]->rating[player_chips] += mult * IT_EXTENDED_3;
-        empties[num_empties - 2]->rating[player_chips] += mult * IT_EXTENDED_3;
+        empties[num_empties - 2]->rating[player_chips] += mult * IT_EXTENDED_3_MID;
         empties[num_empties - 1]->rating[player_chips] += mult * IT_EXTENDED_3;
 
         /* update the leading cells */
@@ -261,8 +262,8 @@ static void match3(const int i) {
         }
     }
 
-    /* matched 3 with 1 leading and 1 tailing cells */
-    if(1 == num_leading_empties && 1 == num_trailing_empties) {
+    /* matched 3 with 1 (or more) leading and 1 tailing cells */
+    if(1 <= num_leading_empties && 1 == num_trailing_empties) {
 
         num_dt_constructs[player_chips] += mult * 1;
 
@@ -270,7 +271,7 @@ static void match3(const int i) {
         if(4 == num_interior_cells) {
             D( printf("matched 3 (broken) \n"); )
             empties[num_empties - 3]->rating[player_chips] += mult * IT_BROKEN_3;
-            empties[num_empties - 2]->rating[player_chips] += mult * IT_BROKEN_3;
+            empties[num_empties - 2]->rating[player_chips] += mult * IT_BROKEN_3_MID;
             empties[num_empties - 1]->rating[player_chips] += mult * IT_BROKEN_3;
 
         /* matched 3, with 1 leading and tailing empty cell */
@@ -289,15 +290,23 @@ static void match3(const int i) {
 void match_seq(board_cell_t **cell, const int increment_mult) {
     int i;
 
+    if(NULL == cell) {
+        return;
+    }
+
     mult = increment_mult;
 
     /* match patterns */
-    for(i = 0, reset_match_info(); *cell != NULL; ++cell, ++i) {
+    reset_match_info();
+    for(i = 0; *cell != NULL; ++cell, ++i) {
+        U( printf("%3d", (*cell)->player_id); )
         update_pattern_info(*cell, i);
         match5(i);
         match4(i);
         match3(i);
     }
+
+    U( printf("\n"); )
 }
 
 /**
