@@ -12,6 +12,7 @@
 #define U(x)
 
 /* empty and full cells that we've seen when matching */
+static int empty_offsets[BOARD_LENGTH];
 static board_cell_t *empties[BOARD_LENGTH];
 static board_cell_t *chips[BOARD_LENGTH];
 static int empty_offset = -1;
@@ -52,6 +53,7 @@ static void update_pattern_info(board_cell_t *cell, const int i) {
 
         /* record for later ;) */
         empties[++empty_offset] = cell;
+        empty_offsets[empty_offset] = i;
 
         /* this is the nth empty cell in a row. */
         if(num_trailing_empties) {
@@ -254,6 +256,14 @@ static void match4(const int i) {
         }
 
         num_leading_empties = 0;
+
+        /* check if we matched a straight four with an empty on either side. */
+        if(i == interior_empty_offset && empty_offset > 0
+        && (i - 5) == empty_offsets[empty_offset-1]) {
+
+            D( printf("matched 4 (straight extended) \n"); )
+            chip_incr *= 2;
+        }
     }
 
     /* should we mark the chips? */
