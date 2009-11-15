@@ -23,7 +23,7 @@
 #define GAME_LOST_MESSAGE "I have lost the game."
 
 /* incremental threat scores to various types of threat sequences */
-#define IT_STRAIGHT_5 1280
+#define IT_STRAIGHT_5 2048
 #define IT_STRAIGHT_4 1024
 #define IT_BROKEN_4 1024
 #define IT_BROKEN_3 128
@@ -57,6 +57,6 @@ typedef enum {
     PLAYER_2 = 2
 } player_t;
 
-typedef unsigned int cell_rating_t;
+typedef int cell_rating_t;
 
 #endif /* COMMON_H_ */

@@ -54,6 +54,18 @@ void init_ratings(board_t *board) {
 }
 
 /**
+ * Clear the ratings (not the weights!!).
+ */
+void clear_ratings(board_t *board) {
+    board_cell_t *cell = &(board->cells[0][0]);
+    board_cell_t *bound = cell + BOARD_NUM_CELLS;
+
+    for(; cell < bound; ++cell) {
+        cell->rating[PLAYER_1] = cell->rating[PLAYER_2] = 0;
+    }
+}
+
+/**
  * Rate the sequences that intersect a given cell.
  */
 static void rate_seq(board_cell_t *pivot_cell,

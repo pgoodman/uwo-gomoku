@@ -26,11 +26,11 @@ static void print_board(board_t *board) {
             cell = &(board->cells[i][j]);
             if(NO_PLAYER == cell->player_id) {
                 /*printf("%5d", (cell->rating[0] + cell->rating[1] + cell->rating[2]));*/
-                printf("%5d", cell->rating[0] + cell->chip_rating);
+                printf("%7d", cell->rating[0] + cell->chip_rating);
             } else if(PLAYER_1 == cell->player_id){
-                printf("    X");
+                printf("      X");
             } else {
-                printf("    O");
+                printf("      O");
             }
         }
         printf("\n");
@@ -108,7 +108,12 @@ int main(const int argc, const char *argv[]) {
             opponent_id,
             &winner_id
         );
-
+        /*
+        print_board(&search_board);
+        board_cell->player_id = player_id;
+        print_board(&search_board);
+        exit(1);
+        */
         /* this shouldn't happen, but it's worth checking... */
         if(NULL == board_cell) {
             DIE("No cell was chosen as the next move.\n");
