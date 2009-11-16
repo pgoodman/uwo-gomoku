@@ -40,15 +40,42 @@ void gen_successors(board_t *board,
                     ordered_cell_seq_t *seq,
                     const player_t player_id) {
     int len = 0;
+    int top = BOARD_LENGTH - 1;
+    int right = 0;
+    int bottom = 0;
+    int left = BOARD_LENGTH - 1;
+    int i;
+    int j;
     board_cell_t **each = &(seq->cells[0]);
-    board_cell_t *cell = &(board->cells[0][0]);
-    board_cell_t *cell_max = cell + BOARD_NUM_CELLS;
+    board_cell_t *cell;
 
-    /* get pointers to all cells in the board */
-    for(; cell < cell_max; ++cell) {
-        if(NO_PLAYER == cell->player_id) {
-            *(each++) = cell;
-            ++len;
+    /* get the bounding box */
+    for(cell = &(board->cells[0][0]),i = 0; i < BOARD_LENGTH; ++i) {
+        for(j = 0; j < BOARD_LENGTH; ++j, ++cell) {
+            if(NO_PLAYER == cell->player_id) {
+                top = MIN(i, top);
+                right = MAX(j, right);
+                bottom = MAX(i, bottom);
+                left = MIN(i, left);
+            }
+        }
+    }
+
+    /* extend the bounding box by BOUND_BOX_EXTEND cells on each side */
+    top = MAX(0, top - BOUND_BOX_EXTEND);
+    right = MIN(BOARD_LENGTH - 1, right + BOUND_BOX_EXTEND);
+    bottom = MIN(BOARD_LENGTH - 1, bottom + BOUND_BOX_EXTEND);
+    left = MAX(0, left - BOUND_BOX_EXTEND);
+
+    /* get pointers to all empty cells within the extended bounded box. */
+    for(cell = &(board->cells[0][0]), i = 0; i < BOARD_LENGTH; ++i) {
+        for(j = 0; j < BOARD_LENGTH; ++j, ++cell) {
+            if(NO_PLAYER == cell->player_id
+            && i <= bottom && i >= top
+            && j <= right && j >= left) {
+                *(each++) = cell;
+                ++len;
+            }
         }
     }
 
