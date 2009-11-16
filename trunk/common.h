@@ -13,6 +13,7 @@
 
 /* configuration macros */
 #define WINNING_SEQ_LENGTH 5
+#define BOUND_BOX_EXTEND 3
 
 #define BOARD_LENGTH 15 /* default board width/height */
 #define BOARD_DIR "./"
