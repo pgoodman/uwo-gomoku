@@ -44,6 +44,68 @@ static board_cell_t *optimal_move(board_cell_t *max_cell,
 }
 
 /**
+ * Perform a depth-first search that calculates the incremental future chip
+ * rating for each cell for each type of chip.
+ */
+static void search_cell_order(board_t *board,
+                              ordered_cell_seq_t *seq,
+                              const player_t player_id,
+                              const player_t opponent_id,
+                              const int depth) {
+
+    ordered_cell_seq_t next_seq;
+    board_cell_t **seq_cell;
+    board_cell_t *cell;
+    int num_cells;
+    int next_depth = depth - 1;
+
+    /* go over all empty cells within the bounding box and calculate their
+     * future chip ratings. */
+    for(seq_cell = &(seq->cells[0]), num_cells = seq->len;
+        num_cells--;
+        ++seq_cell) {
+
+        cell = *seq_cell;
+
+        if(next_depth > 0) {
+            gen_successors(board, &next_seq, NO_PLAYER);
+        }
+
+        /* make our opponents move */
+        cell->player_id = opponent_id;
+        clear_matches();
+        rate_pivoted_seqs(cell, RATE_CHIPS);
+
+        if(next_depth > 0 && !matched_win()) {
+            search_cell_order(
+                board,
+                &next_seq,
+                player_id,
+                opponent_id,
+                next_depth
+            );
+        }
+
+        /* now make our move */
+        cell->player_id = player_id;
+        clear_matches();
+        rate_pivoted_seqs(cell, RATE_CHIPS);
+
+        if(next_depth > 0 && !matched_win()) {
+            search_cell_order(
+                board,
+                &next_seq,
+                player_id,
+                opponent_id,
+                next_depth
+            );
+        }
+
+        cell->player_id = NO_PLAYER;
+    }
+}
+
+/**
  * Choose a move to make.
  */
 board_cell_t *make_move(board_t *board,
@@ -53,14 +115,7 @@ board_cell_t *make_move(board_t *board,
 
     ordered_cell_seq_t max_succ;
     ordered_cell_seq_t min_succ;
-
-    board_cell_t **max_cell;
     board_cell_t *max_move;
-
-    board_cell_t **min_cell;
-    board_cell_t *min_move;
-
-    int num_succ;
 
     /* rate all of the empty cells according to which patterns they belong.
      * Also give them a default weight, and construct the sequence space. */
@@ -110,49 +165,16 @@ board_cell_t *make_move(board_t *board,
 
     D( printf("searching for next best move... \n"); )
 
-    /* order the moves according to their total importance
-     * (weight + player 1 rating + player 2 rating), and then simulate null
-     * moves on those cells. */
-    for(max_cell = &(max_succ.cells[0]); (max_succ.len)--; ++max_cell) {
-        max_move = *max_cell;
+    bound_successors(board);
+    gen_successors(board, &max_succ, NO_PLAYER);
 
-        /* make our opponents move */
-        max_move->player_id = opponent_id;
-        rate_pivoted_seqs(max_move, RATE_CHIPS);
-
-        /* generate the empties once a chip has been placed. we don't actually
-         * care what order we look at them because we look at all of them. */
-        gen_successors(board, &min_succ, NO_PLAYER);
-        { /* go down to the second ply */
-            num_succ = min_succ.len;
-            for(min_cell = &(min_succ.cells[0]); num_succ--; ++min_cell) {
-                min_move = *min_cell;
-                min_move->player_id = opponent_id;
-                rate_pivoted_seqs(min_move, RATE_CHIPS);
-                min_move->player_id = player_id;
-                rate_pivoted_seqs(min_move, RATE_CHIPS);
-                min_move->player_id = NO_PLAYER;
-            }
-        }
-
-        /* now make our move */
-        max_move->player_id = player_id;
-        rate_pivoted_seqs(max_move, RATE_CHIPS);
-
-        { /* go down to the second ply */
-            num_succ = min_succ.len;
-            for(min_cell = &(min_succ.cells[0]); num_succ--; ++min_cell) {
-                min_move = *min_cell;
-                min_move->player_id = opponent_id;
-                rate_pivoted_seqs(min_move, RATE_CHIPS);
-                min_move->player_id = player_id;
-                rate_pivoted_seqs(min_move, RATE_CHIPS);
-                min_move->player_id = NO_PLAYER;
-            }
-        }
-
-        max_move->player_id = NO_PLAYER;
-    }
+    search_cell_order(
+        board,
+        &max_succ,
+        player_id,
+        opponent_id,
+        SEARCH_DEPTH
+    );
 
     clear_ratings(board);
 

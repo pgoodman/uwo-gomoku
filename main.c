@@ -70,6 +70,8 @@ int main(const int argc, const char *argv[]) {
 
     /* make sure the board length is legal */
     STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
+    STATIC_ASSERT(BOARD_LENGTH > 0);
+    STATIC_ASSERT(WINNING_SEQ_LENGTH > 0);
 
     /* get the player information */
     if(argc < 2) {

@@ -23,4 +23,6 @@ void gen_successors(board_t *board,
                     ordered_cell_seq_t *seq,
                     const player_t player_id);
 
+void bound_successors(board_t *board);
+
 #endif /* SUCCESSORS_H_ */

@@ -257,11 +257,13 @@ static void match4(const int i) {
 
         num_leading_empties = 0;
 
-        /* check if we matched a straight four with an empty on either side. */
+        /* check if we matched a straight four with an empty on either side.
+         * we consider this a win as there is no way to block it. */
         if(i == interior_empty_offset && empty_offset > 0
         && (i - 5) == empty_offsets[empty_offset-1]) {
 
             D( printf("matched 4 (straight extended) \n"); )
+            num_wins[player_chips] += mult * 1;
             chip_incr *= 2;
         }
     }
@@ -372,6 +374,15 @@ void match_seq(board_cell_t **cell,
     }
 
     U( printf("\n"); )
+}
+
+/**
+ * Clear out the match results.
+ */
+void clear_matches(void) {
+    num_wins[0] = num_wins[1] = num_wins[2] = 0;
+    num_almost_wins[0] = num_almost_wins[1] = num_almost_wins[2] = 0;
+    num_dt_constructs[0] = num_dt_constructs[1] = num_dt_constructs[2] = 0;
 }
 
 /**
