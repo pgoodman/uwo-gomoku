@@ -18,6 +18,9 @@
 void match_seq(board_cell_t **cell,
                const int increment_mult,
                const int mark_the_chips);
+
+void clear_matches(void);
+
 int matched_win(void);
 
 #endif /* MATCH_H_ */
