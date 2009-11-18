@@ -16,9 +16,8 @@
 #include "seq.h"
 #include "successors.h"
 
-board_cell_t *make_move(board_t *board,
-                        const player_t player_id,
-                        const player_t opponent_id,
-                        player_t *winner_id);
+board_cell_t *choose_move(board_t *board,
+                          const player_t player_id,
+                          const player_t opponent_id);
 
 #endif /* MOVE_H_ */

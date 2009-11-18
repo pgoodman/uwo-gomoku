@@ -16,7 +16,8 @@ static int right = BOARD_LENGTH - 1;
 static int left = 0;
 
 /**
- * Compare the importance ratings of two empty cells.
+ * Compare the importance ratings of two empty cells by the weight + player
+ * rating + chip rating.
  */
 static int compare_cell(const void *a, const void *b) {
     board_cell_t *bb = (*(board_cell_t **) b);
@@ -26,13 +27,14 @@ static int compare_cell(const void *a, const void *b) {
 }
 
 /**
- * Compare the importance ratings of two empty cells.
+ * Compare the importance ratings of two empty cells by the weight + chip
+ * rating.
  */
 static int compare_cell_ratings(const void *a, const void *b) {
     board_cell_t *bb = (*(board_cell_t **) b);
     board_cell_t *aa = (*(board_cell_t **) a);
-    return (bb->rating[0] + bb->rating[1] + bb->rating[2] + bb->chip_rating)
-         - (aa->rating[0] + aa->rating[1] + aa->rating[2] + aa->chip_rating);
+    return (bb->rating[0] + bb->chip_rating)
+         - (aa->rating[0] + aa->chip_rating);
 }
 
 /**
