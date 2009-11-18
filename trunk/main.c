@@ -114,6 +114,7 @@ int main(const int argc, const char *argv[]) {
         /* make the move in search_board and perform pattern matching to see
          * if a win is matched. This will also rate the board, but we don't
          * care about the ratings, just that it does the right matching. */
+        board_cell->player_id = player_id;
         rate_seqs_at_cell(board_cell);
 
         /* we are dealing with a coordinate from 'search_board' and we want
