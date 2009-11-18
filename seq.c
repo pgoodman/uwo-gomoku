@@ -10,6 +10,7 @@
 
 /* map cells to cell sequences */
 static board_cell_seq_t *cell_to_seqs[BOARD_NUM_CELLS][4];
+static board_cell_seq_t board_cell_seqs[BOARD_NUM_SEQS];
 
 static board_cell_seq_t *curr_seq;
 static board_cell_t *first_cell;
@@ -135,13 +136,25 @@ void init_seqs(board_t *board) {
 }
 
 /**
- * Return the ith board cell sequence centered at this cell. NULL is returned
+ * Return the nth board cell sequence centered at this cell. NULL is returned
  * if no such sequence exists. There are at most 4 sequences.
  */
-board_cell_t **cell_sequence(board_cell_t *cell, const int i) {
-    if(i < 0 || i >= 4) {
+board_cell_t **nth_cell_seq_at_cell(board_cell_t *cell, const int n) {
+    if(n < 0 || n >= 4) {
         return NULL;
     }
 
-    return &(cell_to_seqs[(int) (cell - first_cell)][i]->cells[0]);
+    return &(cell_to_seqs[(int) (cell - first_cell)][n]->cells[0]);
+}
+
+/**
+ * Return the nth board cell sequences. NULL is returned if no such sequence
+ * exists.
+ */
+board_cell_seq_t *nth_cell_seq(const int n) {
+    if(n < 0 || n >= BOARD_NUM_SEQS) {
+        return NULL;
+    }
+
+    return &(board_cell_seqs[n]);
 }
