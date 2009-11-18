@@ -263,7 +263,7 @@ static void match4(const int i) {
         /* check if we matched a straight four with an empty on either side.
          * we consider this a win as there is no way to block it. */
         if(i == interior_empty_offset && empty_offset > 0
-        && (i - 5) == empty_offsets[empty_offset-1]) {
+        && (i - 5) == empty_offsets[empty_offset - 1]) {
 
             D( printf("matched 4 (straight extended) \n"); )
             on_match_4_ext(

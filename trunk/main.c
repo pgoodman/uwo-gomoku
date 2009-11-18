@@ -106,7 +106,7 @@ int main(const int argc, const char *argv[]) {
         /* choose the move that we want to make */
         board_cell = choose_move(&search_board, player_id, opponent_id);
 
-        /* this shouldn't happen, but it's worth checking... */
+        /* will only happen if the game has already been won. */
         if(NULL == board_cell) {
             DIE("No cell was chosen as the next move.\n");
         }
