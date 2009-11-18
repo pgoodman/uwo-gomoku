@@ -13,7 +13,7 @@
 
 /* configuration macros */
 #define WINNING_SEQ_LENGTH 5
-#define BOUND_BOX_EXTEND 5
+#define BOUND_BOX_EXTEND 6
 #define SEARCH_DEPTH 2
 
 #define BOARD_LENGTH 15 /* default board width/height */
@@ -26,7 +26,7 @@
 
 /* incremental threat scores to various types of threat sequences */
 #define IT_STRAIGHT_5 2048
-#define IT_EXTENDED_4 2048
+#define IT_EXTENDED_4 1024
 #define IT_STRAIGHT_4 1024
 #define IT_BROKEN_3 128
 #define IT_BROKEN_3_MID 256

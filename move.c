@@ -69,7 +69,7 @@ static void search_cell_order(board_t *board,
         clear_matches();
         rate_seqs_at_cell(cell);
 
-        if(next_depth > 0 && !matched_win(opponent_id)) {
+        if(next_depth > 0 && !matched_win(NO_PLAYER)) {
             search_cell_order(
                 board,
                 first_cell,
@@ -84,7 +84,7 @@ static void search_cell_order(board_t *board,
         clear_matches();
         rate_seqs_at_cell(cell);
 
-        if(next_depth > 0 && !matched_win(player_id)) {
+        if(next_depth > 0 && !matched_win(NO_PLAYER)) {
             search_cell_order(
                 board,
                 first_cell,
