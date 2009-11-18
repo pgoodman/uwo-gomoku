@@ -60,7 +60,6 @@ int main(const int argc, const char *argv[]) {
     /* the player id of the AI, other, and winner */
     player_t player_id;
     player_t opponent_id;
-    player_t winner_id = NO_PLAYER;
 
     /* the board cell that we will place our chip in */
     board_cell_t *board_cell = NULL;
@@ -104,22 +103,18 @@ int main(const int argc, const char *argv[]) {
     /* search for a move. */
     } else {
 
-        board_cell = make_move(
-            &search_board,
-            player_id,
-            opponent_id,
-            &winner_id
-        );
-        /*
-        print_board(&search_board);
-        board_cell->player_id = player_id;
-        print_board(&search_board);
-        exit(1);
-        */
+        /* choose the move that we want to make */
+        board_cell = choose_move(&search_board, player_id, opponent_id);
+
         /* this shouldn't happen, but it's worth checking... */
         if(NULL == board_cell) {
             DIE("No cell was chosen as the next move.\n");
         }
+
+        /* make the move in search_board and perform pattern matching to see
+         * if a win is matched. This will also rate the board, but we don't
+         * care about the ratings, just that it does the right matching. */
+        rate_seqs_at_cell(board_cell);
 
         /* we are dealing with a coordinate from 'search_board' and we want
          * to modify a coordinate in 'board', normalize to 'board'. */
@@ -128,7 +123,7 @@ int main(const int argc, const char *argv[]) {
         board_cell->player_id = player_id; /* cell in 'board' */
 
         /* check if the AI won or tied. */
-        if(player_id == winner_id) {
+        if(matched_win(player_id)) {
             file_put_contents(
                 BOARD_DIR STATUS_FILE,
                 &(GAME_WON_MESSAGE[0]),
@@ -136,11 +131,11 @@ int main(const int argc, const char *argv[]) {
             );
 
         /* the AI lost. */
-        } else if(opponent_id == winner_id) {
+        } else if(matched_win(opponent_id)) {
             fprintf(stdout, "%s\n", GAME_LOST_MESSAGE);
 
         /* the game is a draw */
-        } else if(1 >= board.num_empty_cells) {
+        } else if(board.num_empty_cells <= 1) {
             file_put_contents(
                 BOARD_DIR STATUS_FILE,
                 GAME_DRAW_MESSAGE,

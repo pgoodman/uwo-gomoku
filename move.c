@@ -10,8 +10,8 @@
 
 #define D(x)
 
-static const cell_rating_t win_score = MIN(IT_BROKEN_4, IT_STRAIGHT_4);
-static const cell_rating_t dt_score = MIN(IT_BROKEN_3, IT_EXTENDED_3);
+static const cell_rating_t win_score = IT_STRAIGHT_4;
+static const cell_rating_t dt_score = IT_BROKEN_3;
 
 /**
  * Can we choose an optimal move, given the generated successors?
@@ -19,12 +19,10 @@ static const cell_rating_t dt_score = MIN(IT_BROKEN_3, IT_EXTENDED_3);
 static board_cell_t *optimal_move(board_cell_t *max_cell,
                                   board_cell_t *min_cell,
                                   const player_t player_id,
-                                  const player_t opponent_id,
-                                  player_t *winner_id) {
+                                  const player_t opponent_id) {
 
     /* can we make a winning move immediately? */
     if(max_cell->rating[player_id] >= win_score) {
-        *winner_id = player_id;
         return max_cell;
 
     /* can we block a win? */
@@ -48,38 +46,33 @@ static board_cell_t *optimal_move(board_cell_t *max_cell,
  * rating for each cell for each type of chip.
  */
 static void search_cell_order(board_t *board,
-                              ordered_cell_seq_t *seq,
+                              board_cell_t **first_cell,
                               const player_t player_id,
                               const player_t opponent_id,
                               const int depth) {
 
-    ordered_cell_seq_t next_seq;
     board_cell_t **seq_cell;
     board_cell_t *cell;
-    int num_cells;
     int next_depth = depth - 1;
 
     /* go over all empty cells within the bounding box and calculate their
      * future chip ratings. */
-    for(seq_cell = &(seq->cells[0]), num_cells = seq->len;
-        num_cells--;
-        ++seq_cell) {
-
+    for(seq_cell = first_cell; *seq_cell != NULL; ++seq_cell) {
         cell = *seq_cell;
 
-        if(next_depth > 0) {
-            gen_successors(board, &next_seq, NO_PLAYER);
+        if(NO_PLAYER != cell->player_id) {
+            continue;
         }
 
         /* make our opponents move */
         cell->player_id = opponent_id;
         clear_matches();
-        rate_pivoted_seqs(cell, RATE_CHIPS);
+        rate_seqs_at_cell(cell);
 
-        if(next_depth > 0 && !matched_win()) {
+        if(next_depth > 0 && !matched_win(opponent_id)) {
             search_cell_order(
                 board,
-                &next_seq,
+                first_cell,
                 player_id,
                 opponent_id,
                 next_depth
@@ -89,12 +82,12 @@ static void search_cell_order(board_t *board,
         /* now make our move */
         cell->player_id = player_id;
         clear_matches();
-        rate_pivoted_seqs(cell, RATE_CHIPS);
+        rate_seqs_at_cell(cell);
 
-        if(next_depth > 0 && !matched_win()) {
+        if(next_depth > 0 && !matched_win(player_id)) {
             search_cell_order(
                 board,
-                &next_seq,
+                first_cell,
                 player_id,
                 opponent_id,
                 next_depth
@@ -108,10 +101,9 @@ static void search_cell_order(board_t *board,
 /**
  * Choose a move to make.
  */
-board_cell_t *make_move(board_t *board,
-                        const player_t player_id,
-                        const player_t opponent_id,
-                        player_t *winner_id) {
+board_cell_t *choose_move(board_t *board,
+                          const player_t player_id,
+                          const player_t opponent_id) {
 
     ordered_cell_seq_t max_succ;
     ordered_cell_seq_t min_succ;
@@ -122,7 +114,7 @@ board_cell_t *make_move(board_t *board,
     init_ratings(board);
 
     /* we won't waste processing power needlessly making a move. */
-    if(matched_win()) {
+    if(matched_win(NO_PLAYER)) {
         return NULL;
     }
 
@@ -138,8 +130,7 @@ board_cell_t *make_move(board_t *board,
         max_succ.cells[0],
         min_succ.cells[0],
         player_id,
-        opponent_id,
-        winner_id
+        opponent_id
     );
 
     /* an optimal move was found, take it */
@@ -165,22 +156,26 @@ board_cell_t *make_move(board_t *board,
 
     D( printf("searching for next best move... \n"); )
 
+    clear_ratings(board);
     bound_successors(board);
     gen_successors(board, &max_succ, NO_PLAYER);
 
     search_cell_order(
         board,
-        &max_succ,
+        &(max_succ.cells[0]),
         player_id,
         opponent_id,
         SEARCH_DEPTH
     );
 
-    clear_ratings(board);
-
     /* rate the cells according to their new chip ratings, as well as weights
      * and prior pattern ratings. */
     gen_successors(board, &max_succ, NO_PLAYER);
+
+    /* we went and did some pretty sloppy ratings and matches so lets put
+     * the ratings and matcher back into a nice state. */
+    clear_ratings(board);
+    clear_matches();
 
     D( printf("move chosen. \n"); )
 

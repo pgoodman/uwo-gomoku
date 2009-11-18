@@ -19,7 +19,6 @@
 
 void init_ratings(board_t *board);
 void clear_ratings(board_t *board);
-void rate_pivoted_seqs(board_cell_t *pivot_cell, const int rate_chips);
-void unrate_pivoted_seqs(board_cell_t *pivot_cell, const int rate_chips);
+void rate_seqs_at_cell(board_cell_t *pivot_cell);
 
 #endif /* RATING_H_ */
