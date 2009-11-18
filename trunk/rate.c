@@ -35,11 +35,9 @@ static void weight_board(board_t *board) {
  * sequences have actually been initialized.
  */
 static void rate_board(void) {
-    extern board_cell_seq_t board_cell_seqs[BOARD_NUM_SEQS];
-    int i = BOARD_NUM_SEQS;
+    int i = -1;
     board_cell_seq_t *seq;
-
-    for(seq = &(board_cell_seqs[0]); i--; ++seq) {
+    while(NULL != (seq = nth_cell_seq(++i))) {
         match_seq(&(seq->cells[0]));
     }
 }
@@ -191,6 +189,6 @@ void clear_ratings(board_t *board) {
 void rate_seqs_at_cell(board_cell_t *pivot_cell) {
     int i;
     for(i = 0; i < 4; ++i) {
-        match_seq(cell_sequence(pivot_cell, i));
+        match_seq(nth_cell_seq_at_cell(pivot_cell, i));
     }
 }
