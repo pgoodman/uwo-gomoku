@@ -51,6 +51,8 @@
 #define STATIC_ASSERT(pred) switch(0){case 0:case (pred):;}
 #define DYNAMIC_ASSERT(pred) assert((pred))
 #define OPPONENT(p) ((p)==PLAYER_1 ? PLAYER_2 : PLAYER_1)
+#define CHANGE_BOARD_CELL_BASE(from_cell,from,to) {from_cell = \
+    (((&((to)->cells[0][0])) + ((from_cell) - &((from)->cells[0][0]))));}
 
 /* types */
 typedef enum {
