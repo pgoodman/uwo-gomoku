@@ -9,7 +9,7 @@ OBJ_FILE = fiveinarow
 
 INCLUDES = 
 OBJS = ./main.o ./board.o ./successors.o ./file.o ./rate.o \
-       ./seq.o ./match.o ./move.o
+       ./seq.o ./match.o ./move.o ./context.o
 
 all: ${OBJ_FILE}
 
