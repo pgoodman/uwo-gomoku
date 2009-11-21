@@ -10,6 +10,7 @@
 
 static player_t which_player;
 
+/* the default bounds, the entire board */
 static int top = 0;
 static int bottom = BOARD_LENGTH - 1;
 static int right = BOARD_LENGTH - 1;
@@ -48,6 +49,7 @@ void bound_successors(board_t *board) {
 
     board_cell_t *cell;
 
+    /* reverse bounds, we will grow/shrink them on each side */
     top = BOARD_LENGTH;
     right = 0;
     bottom = 0;
@@ -78,9 +80,9 @@ void bound_successors(board_t *board) {
  *
  * This function also returns the average of all importance ratings.
  */
-void gen_successors(board_t *board,
-                    ordered_cell_seq_t *seq,
-                    const player_t player_id) {
+void generate_successors(board_t *board,
+                         ordered_cell_seq_t *seq,
+                         const player_t player_id) {
     int i;
     int j;
     int len = 0;

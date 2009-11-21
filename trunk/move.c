@@ -10,7 +10,7 @@
 
 #define D(x)
 
-static const cell_rating_t win_score = IT_STRAIGHT_4;
+static const cell_rating_t next_win_score = IT_STRAIGHT_4;
 static const cell_rating_t dt_score = IT_BROKEN_3;
 
 /**
@@ -22,11 +22,11 @@ static board_cell_t *optimal_move(board_cell_t *max_cell,
                                   const player_t opponent_id) {
 
     /* can we make a winning move immediately? */
-    if(max_cell->rating[player_id] >= win_score) {
+    if(max_cell->rating[player_id] >= next_win_score) {
         return max_cell;
 
     /* can we block a win? */
-    } else if(min_cell->rating[opponent_id] >= win_score) {
+    } else if(min_cell->rating[opponent_id] >= next_win_score) {
         return min_cell;
 
     /* can we make a double threat? */
@@ -41,9 +41,18 @@ static board_cell_t *optimal_move(board_cell_t *max_cell,
     return NULL;
 }
 
+typedef struct {
+    board_t *board;
+    board_cell_t **first_cell;
+    const player_t player_id;
+    const player_t opponent_id;
+    const int depth;
+} search_params_t;
+
 /**
  * Perform a depth-first search that calculates the incremental future chip
- * rating for each cell for each type of chip.
+ * rating for each cell for each type of chip. This calculates the chip ratings
+ * of the final placements and so is ideal for use with iterative deepening.
  */
 static void search_cell_order(board_t *board,
                               board_cell_t **first_cell,
@@ -66,8 +75,6 @@ static void search_cell_order(board_t *board,
 
         /* make our opponents move */
         cell->player_id = opponent_id;
-        clear_matches();
-        rate_seqs_at_cell(cell);
 
         if(next_depth > 0 && !matched_win(NO_PLAYER)) {
             search_cell_order(
@@ -77,12 +84,13 @@ static void search_cell_order(board_t *board,
                 opponent_id,
                 next_depth
             );
+        } else {
+            clear_matches();
+            rate_seqs_at_cell(cell);
         }
 
         /* now make our move */
         cell->player_id = player_id;
-        clear_matches();
-        rate_seqs_at_cell(cell);
 
         if(next_depth > 0 && !matched_win(NO_PLAYER)) {
             search_cell_order(
@@ -92,10 +100,17 @@ static void search_cell_order(board_t *board,
                 opponent_id,
                 next_depth
             );
+        } else {
+            clear_matches();
+            rate_seqs_at_cell(cell);
         }
 
         cell->player_id = NO_PLAYER;
     }
+}
+
+void ids_search_move() {
+
 }
 
 /**
@@ -113,15 +128,16 @@ board_cell_t *choose_move(board_t *board,
      * Also give them a default weight, and construct the sequence space. */
     init_ratings(board);
 
-    /* we won't waste processing power needlessly making a move. */
+    /* we won't waste processing power needlessly making a move if either of
+     * the players has already won. */
     if(matched_win(NO_PLAYER)) {
         return NULL;
     }
 
     /* order the cells according to the best rated empty cells that fit as
      * patterns. */
-    gen_successors(board, &max_succ, player_id);
-    gen_successors(board, &min_succ, opponent_id);
+    generate_successors(board, &max_succ, player_id);
+    generate_successors(board, &min_succ, opponent_id);
 
     D( printf("checking for optimal move... \n"); )
 
@@ -144,6 +160,8 @@ board_cell_t *choose_move(board_t *board,
         return max_succ.cells[0];
     }
 
+    D( printf("no immediate optimal move found. \n"); )
+
     /* no immediate optimal move exists, lets try to choose the next
      * best move. The idea is that we want to choose the empty cell that has
      * the highest rating as a future chip placement and not as a future empty
@@ -154,11 +172,13 @@ board_cell_t *choose_move(board_t *board,
      * once, the rating must be incremental and not undone after each
      * simulated chip placement. */
 
-    D( printf("searching for next best move... \n"); )
+    D( printf("initializing ratings search \n"); )
 
     clear_ratings(board);
     bound_successors(board);
-    gen_successors(board, &max_succ, NO_PLAYER);
+    generate_successors(board, &max_succ, NO_PLAYER);
+
+    D( printf("searching for chip ratings... \n"); )
 
     search_cell_order(
         board,
@@ -168,16 +188,16 @@ board_cell_t *choose_move(board_t *board,
         SEARCH_DEPTH
     );
 
-    /* rate the cells according to their new chip ratings, as well as weights
-     * and prior pattern ratings. */
-    gen_successors(board, &max_succ, NO_PLAYER);
+    D( printf("done searching. \n"); )
 
-    /* we went and did some pretty sloppy ratings and matches so lets put
-     * the ratings and matcher back into a nice state. */
+    /* rate the cells according to their new chip ratings, as well as weights
+     * and prior pattern ratings and then put ratings and match info back into
+     * their original state. */
+    generate_successors(board, &max_succ, NO_PLAYER);
     clear_ratings(board);
     clear_matches();
 
-    D( printf("move chosen. \n"); )
+    D( printf("chosing move according to best rating. \n"); )
 
     /* return the best rated cell */
     return max_succ.cells[0];

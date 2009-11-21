@@ -68,14 +68,11 @@ static void rate4_extended(board_cell_t *c1,
                            board_cell_t *c4,
                            board_cell_t *e1,
                            board_cell_t *e2) {
-    /*const player_t pid = c1->player_id;*/
+
     c1->chip_rating += IT_EXTENDED_4;
     c2->chip_rating += IT_EXTENDED_4;
     c3->chip_rating += IT_EXTENDED_4;
     c4->chip_rating += IT_EXTENDED_4;
-    /*
-    e1->rating[pid] += IT_EXTENDED_4;
-    e2->rating[pid] += IT_EXTENDED_4;*/
 }
 
 /**
@@ -87,6 +84,7 @@ static void rate4_straight_broken(board_cell_t *c1,
                                   board_cell_t *c3,
                                   board_cell_t *c4,
                                   board_cell_t *e1) {
+
     const player_t pid = c1->player_id;
     c1->chip_rating += IT_STRAIGHT_4;
     c2->chip_rating += IT_STRAIGHT_4;
@@ -104,6 +102,7 @@ void rate3_straight(board_cell_t *c1,
                     board_cell_t *c3,
                     board_cell_t *e1,
                     board_cell_t *e2) {
+
     const player_t pid = c1->player_id;
     c1->chip_rating += IT_STRAIGHT_3;
     c2->chip_rating += IT_STRAIGHT_3;
@@ -123,6 +122,7 @@ void rate3_broken(board_cell_t *c1,
                   board_cell_t *e1,
                   board_cell_t *e2,
                   board_cell_t *e3) {
+
     const player_t pid = c1->player_id;
     c1->chip_rating += IT_BROKEN_3_MID;
     c2->chip_rating += IT_BROKEN_3_MID;
@@ -143,6 +143,7 @@ void rate3_extended(board_cell_t *c1,
                     board_cell_t *e1,
                     board_cell_t *e2,
                     board_cell_t *e3) {
+
     const player_t pid = c1->player_id;
     c1->chip_rating += IT_EXTENDED_3_MID;
     c2->chip_rating += IT_EXTENDED_3_MID;

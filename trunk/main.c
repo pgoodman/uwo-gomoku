@@ -67,10 +67,12 @@ int main(const int argc, const char *argv[]) {
     /* how long it takes to run the program. */
     time_t duration = time(NULL);
 
-    /* make sure the board length is legal */
+    /* make sure that some of the configurable settings are legal */
     STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
     STATIC_ASSERT(BOARD_LENGTH > 0);
     STATIC_ASSERT(WINNING_SEQ_LENGTH > 0);
+    STATIC_ASSERT(SEARCH_DEPTH >= 0);
+    STATIC_ASSERT(BOUND_BOX_EXTEND >= 0);
 
     /* get the player information */
     if(argc < 2) {
@@ -127,13 +129,13 @@ int main(const int argc, const char *argv[]) {
         if(matched_win(player_id)) {
             file_put_contents(
                 BOARD_DIR STATUS_FILE,
-                &(GAME_WON_MESSAGE[0]),
+                GAME_WON_MESSAGE,
                 strlen(GAME_WON_MESSAGE)
             );
 
         /* the AI lost. */
         } else if(matched_win(opponent_id)) {
-            fprintf(stdout, "%s\n", GAME_LOST_MESSAGE);
+            PRINT(GAME_LOST_MESSAGE);
 
         /* the game is a draw */
         } else if(board.num_empty_cells <= 1) {
