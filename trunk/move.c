@@ -10,6 +10,7 @@
 #include "context.h"
 
 #define D(x)
+#define DD(x) x
 
 typedef struct {
     board_t *board;
@@ -62,37 +63,33 @@ static void search_cell_order(board_t *board,
 
     board_cell_t **seq_cell;
     board_cell_t *cell;
-    int next_depth = depth - 1;
+    const int next_depth = depth - 1;
 
     /* go over all empty cells within the bounding box and calculate their
      * future chip ratings. */
     for(seq_cell = first_cell; *seq_cell != NULL; ++seq_cell) {
         cell = *seq_cell;
 
-        if(NO_PLAYER != cell->player_id) {
-            continue;
-        }
-
         /* make our opponents move */
         cell->player_id = opponent_id;
 
-        if(next_depth > 0 && !matched_win(NO_PLAYER)) {
+        if(next_depth) {
             search_cell_order(
                 board,
                 first_cell,
+                opponent_id, /* note: switch */
                 player_id,
-                opponent_id,
                 next_depth
             );
         } else {
-            clear_matches();
             rate_seqs_at_cell(cell);
         }
 
         /* now make our move */
+        /*
         cell->player_id = player_id;
 
-        if(next_depth > 0 && !matched_win(NO_PLAYER)) {
+        if(next_depth) {
             search_cell_order(
                 board,
                 first_cell,
@@ -101,9 +98,8 @@ static void search_cell_order(board_t *board,
                 next_depth
             );
         } else {
-            clear_matches();
             rate_seqs_at_cell(cell);
-        }
+        }*/
 
         cell->player_id = NO_PLAYER;
     }
@@ -122,23 +118,41 @@ static void ids_search_move(search_params_t *vars) {
 
     /* specific things for the search */
     ordered_cell_seq_t succ;
+    board_cell_t **first_cell = &(succ.cells[0]);
     int depth;
 
+    /* sort the successors and get the default next move */
     generate_successors(board, &succ, NO_PLAYER);
+    vars->best_move = *first_cell;
+
+    /* clear the ratings and bound successors for all depths > 1 */
+    clear_ratings(board);
+    bound_successors(board);
 
     for(depth = 1; depth <= SEARCH_DEPTH; ++depth) {
 
         search_cell_order(
             board,
-            &(succ.cells[0]),
+            first_cell,
             player_id,
             opponent_id,
             depth
         );
 
-        /* yield the best move */
+        search_cell_order(
+            board,
+            first_cell,
+            opponent_id,
+            player_id,
+            depth
+        );
+
+        /* yield the best move and sort the successors for the next
+         * iteration. */
         generate_successors(board, &succ, NO_PLAYER);
-        vars->best_move = succ.cells[0];
+        vars->best_move = *first_cell;
+
+        DD( printf("searched to level %d \n", depth); )
     }
 }
 
@@ -202,11 +216,6 @@ board_cell_t *choose_move(board_t *board,
      * once, the rating must be incremental and not undone after each
      * simulated chip placement. */
 
-    D( printf("initializing ratings search \n"); )
-
-    clear_ratings(board);
-    bound_successors(board);
-
     D( printf("searching for chip ratings... \n"); )
 
     /* pack the search stuff into a thunk and then perform the search for no
@@ -222,11 +231,6 @@ board_cell_t *choose_move(board_t *board,
         (void *) &params,
         MAX_SEARCH_TIME
     );
-
-    /* default to this on error */
-    if(NULL == params.best_move) {
-        params.best_move = max_succ.cells[0];
-    }
 
     D( printf("done searching. \n"); )
 

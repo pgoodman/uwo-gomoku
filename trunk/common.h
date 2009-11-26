@@ -13,9 +13,10 @@
 
 /* configuration macros */
 #define WINNING_SEQ_LENGTH 5
-#define BOUND_BOX_EXTEND 6
-#define SEARCH_DEPTH 3
+#define BOUND_BOX_EXTEND 4
+#define SEARCH_DEPTH 2
 #define MAX_SEARCH_TIME 9
+#define MAX_NUM_SUCCESSORS 120
 
 #define BOARD_LENGTH 15 /* default board width/height */
 #define BOARD_DIR "./"
