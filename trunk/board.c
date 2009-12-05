@@ -15,9 +15,11 @@
  */
 int read_board(board_t *board) {
 
+    int i; /* row */
+    int j; /* column */
+    int k = 0; /* buffer index */
     char buffer[BOARD_BUFFER_SIZE]; /* text buffer for file contents */
-    char *c = &(buffer[0]); /* current character in the buffer */
-    int num_cells_left = BOARD_NUM_CELLS;
+    char c; /* current character in the buffer */
     board_cell_t *cell; /* current cell in the board */
 
     DYNAMIC_ASSERT(NULL != board);
@@ -25,41 +27,47 @@ int read_board(board_t *board) {
     board->num_empty_cells = 0;
 
     /* read the board in from the file */
-    *c = '\0';
-    file_get_contents(
+    i = file_get_contents(
         BOARD_DIR BOARD_FILE,
-        c,
+        &(buffer[0]),
         BOARD_MIN_BUFFER_SIZE - 1,
         BOARD_BUFFER_SIZE
     );
 
     /* file read failed */
-    if(!*c) {
+    if(!i) {
         return 0;
     }
 
-    /* go character-by-character in the filled text buffer */
-    for(cell = &(board->cells[0][0]); num_cells_left; ++c) {
+    for(i = 0; i < BOARD_LENGTH; ++i) {
+        for(j = 0; j < BOARD_LENGTH; ++k) {
 
-        /* deal with the character */
-        switch(*c) {
-            case '0':
+            c = buffer[k];
+            cell = &(board->cells[i][j]);
+
+            if('0' == c) {
                 cell->player_id = NO_PLAYER;
                 ++(board->num_empty_cells);
-                break;
-            case '1': cell->player_id = PLAYER_1; break;
-            case '2': cell->player_id = PLAYER_2; break;
-            default: continue;
+
+            } else if('1' == c) {
+                cell->player_id = PLAYER_1;
+
+            } else if('2' == c) {
+                cell->player_id = PLAYER_2;
+
+            /* non-cell */
+            } else {
+                continue;
+            }
+
+            /* add default null chip and empty cell ratings in */
+            cell->chip_rating = 0;
+            cell->rating[NO_PLAYER] = 0;
+            cell->rating[PLAYER_1] = 0;
+            cell->rating[PLAYER_2] = 0;
+
+            ++j;
         }
-
-        /* initialize the default values for this cell */
-        cell->chip_rating = 0;
-        cell->rating[NO_PLAYER] = 0; /* weight */
-        cell->rating[PLAYER_1] = 0; /* cell rating */
-        cell->rating[PLAYER_2] = 0;
-
-        --num_cells_left;
-        ++cell;
     }
 
     return 1;
@@ -80,12 +88,16 @@ int put_board(board_t *board) {
     /* fill the buffer */
     for(i = 0, cell = &(board->cells[0][0]); i < BOARD_LENGTH; ++i) {
         for(j = 0; j < BOARD_LENGTH; ++j, ++cell) {
-            switch(cell->player_id) {
-                case NO_PLAYER: buffer[++k] = '0'; break;
-                case PLAYER_1: buffer[++k] = '1'; break;
-                case PLAYER_2: buffer[++k] = '2'; break;
-                default: continue; /* shouldn't happen */
+
+            /* type safety is fun :D */
+            if(cell->player_id == NO_PLAYER) {
+                buffer[++k] = '0';
+            } else if(cell->player_id == PLAYER_1) {
+                buffer[++k] = '1';
+            } else if(cell->player_id == PLAYER_2) {
+                buffer[++k] = '2';
             }
+
             buffer[++k] = ' ';
         }
         buffer[k] = '\n'; /* replaces trailing space on current line */

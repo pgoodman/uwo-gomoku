@@ -30,7 +30,7 @@ static int interior_empty_offset = -1;
 static int first_chip_offset = -1;
 static player_t player_chips = NO_PLAYER;
 
-/* call-backs for when a match is made. */
+/* callbacks for when a match is made. */
 static match5_callback_t *on_match_5 = &match5_ignore;
 static match4ext_callback_t *on_match_4_ext = &match4ext_ignore;
 static match4_callback_t *on_match_4_straight = &match4_ignore;
@@ -155,7 +155,6 @@ static void reset_match_info(void) {
  * Attempt to match a winning sequence, i.e.: 5 chips in a row.
  */
 static void match5(const int i) {
-
     const int num_surrounding_empties = num_leading_empties + num_trailing_empties;
     const int num_interior_cells = num_cells_in_seq - num_surrounding_empties;
 
@@ -388,7 +387,7 @@ void match_seq(board_cell_t **cell) {
 }
 
 /**
- * Clear out the match information.
+ * Clear out the matches information.
  */
 void clear_matches(void) {
     matched_wins[PLAYER_1] = 0;

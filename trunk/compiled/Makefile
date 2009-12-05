@@ -9,16 +9,16 @@ OBJ_FILE = fiveinarow
 
 INCLUDES = 
 OBJS = ./main.o ./board.o ./successors.o ./file.o ./rate.o \
-       ./seq.o ./match.o ./move.o ./context.o
+       ./seq.o ./match.o ./move.o ./history.o ./context.o
 
-all: ${OBJ_FILE}
+all: ${OBJ_FILE} clean
 
 clean:
 	-rm *.o
 
 realclean: clean
-	-rm ${OBJ_FILE}
-
+	-rm ./${OBJ_FILE}
+	
 # compile the project
 ${OBJ_FILE}: ${OBJS} ${EXT_OBJS}
 	${CC} ${INCLUDES} -lm -o $@ ${OBJS}
