@@ -24,4 +24,6 @@ int file_get_contents(const char *name,
 
 int file_put_contents(const char *name, char *buffer, const size_t len);
 
+#define file_delete remove
+
 #endif /* FILE_H_ */

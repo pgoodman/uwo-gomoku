@@ -13,10 +13,10 @@
 
 /* configuration macros */
 #define WINNING_SEQ_LENGTH 5
-#define BOUND_BOX_EXTEND 4
+#define BOUND_BOX_EXTEND 6
 #define SEARCH_DEPTH 2
-#define MAX_SEARCH_TIME 9
-#define MAX_NUM_SUCCESSORS 120
+#define ENABLE_HISTORY 0
+#define HISTORY_SCALE_FACTOR 1024
 
 #define BOARD_LENGTH 15 /* default board width/height */
 #define BOARD_DIR "./"
@@ -53,8 +53,6 @@
 #define STATIC_ASSERT(pred) switch(0){case 0:case (pred):;}
 #define DYNAMIC_ASSERT(pred) assert((pred))
 #define OPPONENT(p) ((p)==PLAYER_1 ? PLAYER_2 : PLAYER_1)
-#define CHANGE_BOARD_CELL_BASE(from_cell,from,to) {from_cell = \
-    (((&((to)->cells[0][0])) + ((from_cell) - &((from)->cells[0][0]))));}
 
 /* types */
 typedef enum {

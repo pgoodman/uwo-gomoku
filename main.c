@@ -14,6 +14,7 @@
 #include "common.h"
 #include "board.h"
 #include "move.h"
+#include "history.h"
 
 #if 0
 static void print_board(board_t *board) {
@@ -67,12 +68,10 @@ int main(const int argc, const char *argv[]) {
     /* how long it takes to run the program. */
     time_t duration = time(NULL);
 
-    /* make sure that some of the configurable settings are legal */
+    /* make sure the board length is legal */
     STATIC_ASSERT(BOARD_LENGTH >= WINNING_SEQ_LENGTH);
     STATIC_ASSERT(BOARD_LENGTH > 0);
     STATIC_ASSERT(WINNING_SEQ_LENGTH > 0);
-    STATIC_ASSERT(SEARCH_DEPTH >= 0);
-    STATIC_ASSERT(BOUND_BOX_EXTEND >= 0);
 
     /* get the player information */
     if(argc < 2) {
@@ -96,6 +95,9 @@ int main(const int argc, const char *argv[]) {
 
     /* copy the board data structure into the search_board. */
     memcpy(&search_board, &board, sizeof(board_t));
+
+    /* clear out any old history */
+    clear_old_history(&board, player_id);
 
     /* use the center of the board */
     if(BOARD_NUM_CELLS == board.num_empty_cells) {
@@ -129,13 +131,13 @@ int main(const int argc, const char *argv[]) {
         if(matched_win(player_id)) {
             file_put_contents(
                 BOARD_DIR STATUS_FILE,
-                GAME_WON_MESSAGE,
+                &(GAME_WON_MESSAGE[0]),
                 strlen(GAME_WON_MESSAGE)
             );
 
         /* the AI lost. */
         } else if(matched_win(opponent_id)) {
-            PRINT(GAME_LOST_MESSAGE);
+            fprintf(stdout, "%s\n", GAME_LOST_MESSAGE);
 
         /* the game is a draw */
         } else if(board.num_empty_cells <= 1) {

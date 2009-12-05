@@ -30,11 +30,14 @@ int file_get_contents(const char *name,
 
     /* get the game board, include any possible \n's or \r's and spaces. */
     got = read(fd, buffer, max_len);
-    close(fd);
 
     if(got < (ssize_t) min_len) {
+        perror("file_get_contents[open]");
+        close(fd);
         return 0;
     }
+
+    close(fd);
 
     return 1;
 }
@@ -48,16 +51,21 @@ int file_put_contents(const char *name, char *buffer, const size_t len) {
 
     fd = open(name, O_TRUNC | O_CREAT | O_WRONLY);
     if(-1 == fd) {
+        perror("file_put_contents[open]");
+        close(fd);
         return 0;
     }
 
     fchmod(fd, FILE_PUT_CHMOD);
     put = write(fd, buffer, len);
-    close(fd);
 
     if(put < len) {
+        perror("file_put_contents[write]");
+        close(fd);
         return 0;
     }
+
+    close(fd);
 
     return 1;
 }
