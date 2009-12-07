@@ -21,20 +21,23 @@ static board_cell_t *match_optimal_move(board_cell_t *max_cell,
                                         const player_t player_id,
                                         const player_t opponent_id) {
 
+    const cell_rating_t max_rating = max_cell->rating[player_id];
+    const cell_rating_t min_rating = min_cell->rating[opponent_id];
+
     /* can we make a winning move immediately? */
-    if(max_cell->rating[player_id] >= win_score) {
+    if(max_rating >= win_score) {
         return max_cell;
 
     /* can we block a win? */
-    } else if(min_cell->rating[opponent_id] >= win_score) {
+    } else if(min_rating >= win_score) {
         return min_cell;
 
     /* can we make a double threat? */
-    } else if(max_cell->rating[player_id] >= dt_score) {
+    } else if(max_rating >= dt_score) {
         return max_cell;
 
     /* can we block a double threat? */
-    } else if(min_cell->rating[opponent_id] >= dt_score) {
+    } else if(min_rating >= dt_score) {
         return min_cell;
     }
 
@@ -45,7 +48,7 @@ static board_cell_t *match_optimal_move(board_cell_t *max_cell,
  * Perform a depth-first search that calculates the incremental future chip
  * rating for each cell for each type of chip.
  */
-static void search_cell_order(board_t *board,
+static void search_successors(board_t *board,
                               board_cell_t **first_cell,
                               const player_t player_id,
                               const player_t opponent_id,
@@ -66,12 +69,12 @@ static void search_cell_order(board_t *board,
 
         /* make our opponents move */
         cell->player_id = opponent_id;
-        clear_matches();
 
+        clear_matches();
         rate_seqs_at_cell(cell);
 
         if(next_depth > 0 && !matched_win(NO_PLAYER)) {
-            search_cell_order(
+            search_successors(
                 board,
                 first_cell,
                 player_id,
@@ -82,12 +85,12 @@ static void search_cell_order(board_t *board,
 
         /* now make our move */
         cell->player_id = player_id;
-        clear_matches();
 
+        clear_matches();
         rate_seqs_at_cell(cell);
 
         if(next_depth > 0 && !matched_win(NO_PLAYER)) {
-            search_cell_order(
+            search_successors(
                 board,
                 first_cell,
                 player_id,
@@ -103,26 +106,55 @@ static void search_cell_order(board_t *board,
 /**
  * Perform a search that also rates the board.
  */
-static board_cell_t *rated_search(board_t *board,
-                                  ordered_cell_seq_t *successors,
-                                  const player_t player_id,
-                                  const player_t opponent_id) {
-
+static ordered_cell_seq_t *rate_successors(board_t *board,
+                                           ordered_cell_seq_t *successors,
+                                           const player_t player_id,
+                                           const player_t opponent_id) {
     gen_successors(board, successors, NO_PLAYER);
-
-    search_cell_order(
+    search_successors(
         board,
         &(successors->cells[0]),
         player_id,
         opponent_id,
-        SEARCH_DEPTH
+        PATTERN_SEARCH_DEPTH
     );
-
-    /* rate the cells according to their new chip ratings, as well as weights
-     * and prior pattern ratings. */
     gen_successors(board, successors, NO_PLAYER);
 
-    return successors->cells[0];
+    return successors;
+}
+
+/**
+ * Choose one of the top-rated successors. We've search and rated the moves
+ * and now we have a sequence of successors ordered by their ratings. It might
+ * be the case, however, that the top rated one is not the one we really want
+ * to choose. This can happen for a number of reasons, but we will more
+ * generally refer to the problem as disturbance by noise (i.e. signal vs.
+ * noise). Thus, we want to look at the best few and then evaluate them in a
+ * different way.
+ */
+static board_cell_t *choose_succesor(ordered_cell_seq_t *successors) {
+    const cell_rating_t max_score = successors->cells[0]->chip_rating;
+    const cell_rating_t min_score = max_score - IT_STRAIGHT_4;
+    unsigned int rand_val;
+    unsigned int i = 0;
+
+    srand((unsigned int) time(NULL));
+    rand_val = (unsigned int) rand();
+
+    if(max_score > (4 * IT_STRAIGHT_4)) {
+        for(i = 0; i < successors->len; ++i) {
+            if((successors->cells[i])->chip_rating >= min_score) {
+                continue;
+            }
+            break;
+        }
+
+        if(i > 1) {
+            printf("making random choice from %d nodes. \n", i);
+        }
+    }
+
+    return successors->cells[rand_val % ++i];
 }
 
 /**
@@ -150,6 +182,11 @@ board_cell_t *choose_move(board_t *board,
     gen_successors(board, &max_succ, player_id);
     gen_successors(board, &min_succ, opponent_id);
 
+    if(1 == max_succ.len) {
+        D( printf("only move chosen. \n"); )
+        optimal_move = max_succ.cells[0];
+    }
+
     D( printf("checking for optimal move... \n"); )
 
     /* try to choose an optimal move */
@@ -160,53 +197,30 @@ board_cell_t *choose_move(board_t *board,
         opponent_id
     );
 
-    if(1 == max_succ.len) {
-        D( printf("only move chosen. \n"); )
-        return max_succ.cells[0];
-    }
-
-    D( printf("searching for next best move... \n"); )
-
-    clear_ratings(board);
-    bound_successors(board);
-
-    /* no optimal move, lets search for our move */
     if(NULL == optimal_move) {
 
-        if(ENABLE_HISTORY) {
-            import_board_history(board, player_id);
-        }
+        D( printf("searching for next best move... \n"); )
 
-        optimal_move = rated_search(
+        clear_ratings(board);
+        bound_successors(board);
+
+        srand((unsigned int) time(NULL));
+
+        /* find the next best move */
+        printf("before \n");
+        optimal_move = choose_succesor(rate_successors(
             board,
             &max_succ,
             player_id,
             opponent_id
-        );
+        ));
+        printf("after \n");
 
         clear_ratings(board);
         clear_matches();
     }
 
-    /* lets try to figure out where our opponent is going and construct the
-     * board history based on that. */
-    if(ENABLE_HISTORY && 1 < max_succ.len) {
-        optimal_move->player_id = player_id;
-
-        import_board_history(board, player_id);
-
-        rated_search(
-            board,
-            &max_succ,
-            opponent_id,
-            player_id
-        );
-
-        optimal_move->player_id = NO_PLAYER;
-        export_board_history(board, player_id);
-        clear_ratings(board);
-        clear_matches();
-    }
+    printf("hi \n");
 
     /* return the best rated cell */
     return optimal_move;
