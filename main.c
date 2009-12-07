@@ -14,7 +14,6 @@
 #include "common.h"
 #include "board.h"
 #include "move.h"
-#include "history.h"
 
 #if 0
 static void print_board(board_t *board) {
@@ -95,9 +94,6 @@ int main(const int argc, const char *argv[]) {
 
     /* copy the board data structure into the search_board. */
     memcpy(&search_board, &board, sizeof(board_t));
-
-    /* clear out any old history */
-    clear_old_history(&board, player_id);
 
     /* use the center of the board */
     if(BOARD_NUM_CELLS == board.num_empty_cells) {

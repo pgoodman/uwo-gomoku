@@ -3,15 +3,15 @@
 # Peter Goodman
 #
 
-CC = gcc
-CFLAGS = -O3 -g -pedantic -pedantic-errors -Wall -Werror -c -ansi
+CC = /Developer/usr/bin/clang
+CFLAGS = -O0 -g -pedantic -pedantic-errors -Wall -Werror -c -ansi
 OBJ_FILE = fiveinarow
 
 INCLUDES = 
 OBJS = ./main.o ./board.o ./successors.o ./file.o ./rate.o \
-       ./seq.o ./match.o ./move.o ./history.o ./context.o
+       ./seq.o ./match.o ./move.o 
 
-all: ${OBJ_FILE} clean
+all: ${OBJ_FILE}
 
 clean:
 	-rm *.o
