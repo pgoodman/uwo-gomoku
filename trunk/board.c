@@ -9,9 +9,7 @@
 #include "board.h"
 
 /**
- * Read in the board from memory. This goes straight to file descriptors
- * instead of file pointers to avoid needlessly passing the board from
- * buffer to buffer.
+ * Read in the board from memory.
  */
 int read_board(board_t *board) {
 
@@ -112,3 +110,27 @@ int put_board(board_t *board) {
 
     return i;
 }
+
+/**
+ * Return the md5 hash of the game board when we toggle a specific board
+ * position.
+ */
+void hash_board(board_t *board, char hash[33]) {
+
+    board_cell_t *cell = &(board->cells[0][0]);
+    char board_str[BOARD_NUM_CELLS + 1];
+    char *c = &(board_str[0]);
+    int i = BOARD_NUM_CELLS;
+
+    for(; i--; ++cell, ++c) {
+        switch(cell->player_id) {
+            case NO_PLAYER: *c = '0'; continue;
+            case PLAYER_1: *c = '1'; continue;
+            case PLAYER_2: *c = '2'; continue;
+        }
+    }
+    *c = '\0';
+
+    md5(&(board_str[0]), &(hash[0]));
+}
+

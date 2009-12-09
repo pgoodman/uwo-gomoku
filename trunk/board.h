@@ -11,6 +11,7 @@
 
 #include "common.h"
 #include "file.h"
+#include "md5/md5.h"
 
 /* board cell type */
 typedef struct {
@@ -27,5 +28,6 @@ typedef struct {
 
 int read_board(board_t *);
 int put_board(board_t *);
+void hash_board(board_t *board, char hash[33]);
 
 #endif /* BOARD_H_ */

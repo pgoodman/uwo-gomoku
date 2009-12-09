@@ -9,7 +9,7 @@ OBJ_FILE = fiveinarow
 
 INCLUDES = 
 OBJS = ./main.o ./board.o ./successors.o ./file.o ./rate.o \
-       ./seq.o ./match.o ./move.o 
+       ./seq.o ./match.o ./move.o ./md5.o ./player1.o ./player2.o
 
 all: ${OBJ_FILE}
 
@@ -25,4 +25,10 @@ ${OBJ_FILE}: ${OBJS} ${EXT_OBJS}
 	
 # base objects
 %.o: ../%.c
+	${CC} ${INCLUDES} $^ $(CFLAGS)
+
+# library objects
+%.o: ../md5/%.c
+	${CC} ${INCLUDES} $^ $(CFLAGS)
+%.o: ../insight/%.c
 	${CC} ${INCLUDES} $^ $(CFLAGS)
