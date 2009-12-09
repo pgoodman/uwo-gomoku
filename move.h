@@ -19,6 +19,10 @@
 #include "successors.h"
 #include "time.h"
 
+/* related to learning */
+#include "insight/player1.h"
+#include "insight/player2.h"
+
 board_cell_t *choose_move(board_t *board,
                           const player_t player_id,
                           const player_t opponent_id);
