@@ -14,12 +14,96 @@ static const cell_rating_t win_score = IT_STRAIGHT_4;
 static const cell_rating_t dt_score = IT_BROKEN_3;
 
 /**
+ * See if a learned move exists and if so take the best learned move.
+ */
+static board_cell_t *get_insightful_move(board_t *board,
+                                         ordered_cell_seq_t *successors,
+                                         const player_t player_id) {
+
+    board_cell_t *insightful_cell = NULL;
+    board_cell_t *cell = NULL;
+
+    int curr_insight;
+    int max_insight = 0;
+    int i;
+
+    char board_hash[33];
+
+    if(!USE_LEARNED_MOVES) {
+        return NULL;
+    }
+
+    /* find the learned winning scores, if any, for the board positions */
+    D( printf("looking to see if move has been learned... \n"); )
+
+    /* choose the best one. if they all have zero or none are in the db then
+     * fall through. */
+    for(i = 0; i < successors->len; ++i) {
+
+        cell = successors->cells[i];
+
+        /* hash of the move we *might* make */
+        cell->player_id = player_id;
+        hash_board(board, &(board_hash[0]));
+        cell->player_id = NO_PLAYER;
+
+        if(PLAYER_1 == player_id) {
+            curr_insight = player1_score(&(board_hash[0]), 32);
+        } else {
+            curr_insight = player2_score(&(board_hash[0]), 32);
+        }
+
+        /* ignore this board position and kill the successor */
+        if(-1 == curr_insight) {
+            continue;
+        }
+
+        D( printf("insight score %d of %s \n", curr_insight, board_hash); )
+
+        /* this looks like it might be aood choice :D */
+        if(curr_insight > max_insight) {
+            max_insight = curr_insight;
+            insightful_cell = cell;
+        }
+    }
+
+    if(max_insight > MIN_INSIGHT && NULL != insightful_cell) {
+        D( printf("using learned move. \n"); )
+        return insightful_cell;
+    }
+
+    D( printf("no learned move exists. \n"); )
+
+    return NULL;
+}
+
+/**
+ * Figure out if we should choose the optimal move, or an insightful optimal
+ * move.
+ */
+static board_cell_t *choose_optimal_or_insightful(board_cell_t *optimal_move,
+                                                  board_cell_t *insightful_move,
+                                                  const cell_rating_t bound,
+                                                  const player_t player_id) {
+    if(NULL == insightful_move) {
+        return optimal_move;
+    } else if(insightful_move->rating[player_id] >= bound) {
+        return insightful_move;
+    }
+    return optimal_move;
+}
+
+/**
  * Can we choose an optimal move, given the generated successors?
  */
-static board_cell_t *match_optimal_move(board_cell_t *max_cell,
-                                        board_cell_t *min_cell,
+static board_cell_t *match_optimal_move(board_t *board,
+                                        ordered_cell_seq_t *max_succ,
+                                        ordered_cell_seq_t *min_succ,
                                         const player_t player_id,
                                         const player_t opponent_id) {
+
+    board_cell_t *max_cell = max_succ->cells[0];
+    board_cell_t *min_cell = min_succ->cells[0];
 
     const cell_rating_t max_rating = max_cell->rating[player_id];
     const cell_rating_t min_rating = min_cell->rating[opponent_id];
@@ -35,12 +119,23 @@ static board_cell_t *match_optimal_move(board_cell_t *max_cell,
 
     /* can we make a double threat? */
     } else if(max_rating >= dt_score) {
-        return max_cell;
+        return choose_optimal_or_insightful(
+            max_cell,
+            get_insightful_move(board, max_succ, player_id),
+            dt_score,
+            player_id
+        );
 
     /* can we block a double threat? */
     } else if(min_rating >= dt_score) {
         printf("forced move. \n");
-        return min_cell;
+        return choose_optimal_or_insightful(
+            min_cell,
+            get_insightful_move(board, min_succ, player_id),
+            win_score,
+            opponent_id
+        );
+
     }
 
     return NULL;
@@ -125,8 +220,6 @@ static ordered_cell_seq_t *rate_successors(board_t *board,
     return successors;
 }
 
-
-
 /**
  * Choose one of the top-rated successors. We've search and rated the moves
  * and now we have a sequence of successors ordered by their ratings. It might
@@ -137,26 +230,21 @@ static ordered_cell_seq_t *rate_successors(board_t *board,
  * different way.
  */
 static board_cell_t *choose_succesor(board_t *board,
-                                     const player_t player_id,
-                                     ordered_cell_seq_t *successors) {
+                                     ordered_cell_seq_t *successors,
+                                     const player_t player_id) {
 
     const cell_rating_t max_score = successors->cells[0]->chip_rating;
     const cell_rating_t min_rand_score = max_score - IT_STRAIGHT_4;
     cell_rating_t chip_rating;
-
-    board_cell_t *insightful_cell = NULL;
-    board_cell_t *cell = NULL;
-
-    /* used to fall back to our best original move */
-    board_cell_t *max_cell = successors->cells[0];
+    board_cell_t *move = get_insightful_move(board, successors, player_id);
 
     int rand_val;
-    int curr_insight;
-    int max_insight = 0;
     int i = 0;
-    int j = 0;
     int rand_choice = 1;
-    char board_hash[33];
+
+    if(NULL != move) {
+        return move;
+    }
 
     srand((unsigned int) time(NULL));
     rand_val = rand();
@@ -176,77 +264,7 @@ static board_cell_t *choose_succesor(board_t *board,
         }
     }
 
-    if(USE_LEARNED_MOVES) {
-
-        /* find the learned winning scores, if any, for the board positions */
-        D( printf("looking to see if move has been learned... \n"); )
-
-        /* choose the best one. if they all have zero or none are in the db then
-         * fall through. */
-        for(i = 0; i < successors->len; ++i) {
-
-            cell = successors->cells[i];
-
-            /* hash of the move we *might* make */
-            cell->player_id = player_id;
-            hash_board(board, &(board_hash[0]));
-            cell->player_id = NO_PLAYER;
-
-            if(PLAYER_1 == player_id) {
-                curr_insight = player1_score(&(board_hash[0]), 32);
-            } else {
-                curr_insight = player2_score(&(board_hash[0]), 32);
-            }
-
-            /* ignore this board position and kill the successor */
-            if(-1 == curr_insight) {
-                continue;
-            }
-
-            /* kill off the successor */
-            /*if(curr_insight <= 0) {
-                if(!USE_RANDOM_MOVES) {
-                    D( printf("killing successor %d \n", i); )
-                    successors->cells[i] = NULL;
-                }
-                continue;
-            }*/
-
-            D( printf("insight score %d of %s \n", curr_insight, board_hash); )
-
-            /* this looks like it might be aood choice :D */
-            if(curr_insight > max_insight) {
-                max_insight = curr_insight;
-                insightful_cell = cell;
-            }
-        }
-
-        if(max_insight > MIN_INSIGHT && NULL != insightful_cell) {
-            D( printf("using learned move. \n"); )
-            return insightful_cell;
-        }
-    }
-
-    D( printf(
-           "no learned move; making random choice from %d nodes. \n",
-           rand_choice - 1
-       );
-    )
-
-    /* go take the first non-nulled cell; cells will be nulled by the learning
-     * algorithm. */
-    /*rand_val = rand_val % rand_choice;
-    for(i = 0, j = 0; i < successors->len; ++i) {
-        if(NULL == successors->cells[i]) {
-            continue;
-        } else {
-            if(j == rand_val) {
-                D( printf("returning successor %d \n", i); )
-                return successors->cells[i];
-            }
-            ++j;
-        }
-    }*/
+    D( printf("making random choice from %d nodes. \n", rand_choice - 1); )
 
     return successors->cells[rand_val % rand_choice];
 }
@@ -286,8 +304,9 @@ board_cell_t *choose_move(board_t *board,
     /* try to choose an optimal move, this can be a forced move a lot of
      * the time. */
     optimal_move = match_optimal_move(
-        max_succ.cells[0],
-        min_succ.cells[0],
+        board,
+        &max_succ,
+        &min_succ,
         player_id,
         opponent_id
     );
@@ -304,12 +323,12 @@ board_cell_t *choose_move(board_t *board,
     srand((unsigned int) time(NULL));
 
     /* find the next best move */
-    optimal_move = choose_succesor(board, player_id, rate_successors(
+    optimal_move = choose_succesor(board, rate_successors(
         board,
         &max_succ,
         player_id,
         opponent_id
-    ));
+    ), player_id);
 
     clear_ratings(board);
     clear_matches();
