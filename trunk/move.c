@@ -141,19 +141,21 @@ static board_cell_t *choose_succesor(board_t *board,
                                      ordered_cell_seq_t *successors) {
 
     const cell_rating_t max_score = successors->cells[0]->chip_rating;
-    const cell_rating_t min_learned_score = max_score - IT_STRAIGHT_5;
     const cell_rating_t min_rand_score = max_score - IT_STRAIGHT_4;
     cell_rating_t chip_rating;
 
     board_cell_t *insightful_cell = NULL;
     board_cell_t *cell = NULL;
 
+    /* used to fall back to our best original move */
+    board_cell_t *max_cell = successors->cells[0];
+
     int rand_val;
     int curr_insight;
     int max_insight = 0;
     int i = 0;
+    int j = 0;
     int rand_choice = 1;
-    int learned_choice = 1;
     char board_hash[33];
 
     srand((unsigned int) time(NULL));
@@ -161,62 +163,67 @@ static board_cell_t *choose_succesor(board_t *board,
 
     /* look at the successors and count how many are within range of a random
      * choice and how many are within range of using out insight scores. */
-    if(max_score > (4 * IT_STRAIGHT_4)) {
-        for(i = 0; i < successors->len; ++i) {
-            chip_rating = (successors->cells[i])->chip_rating;
-            if(chip_rating >= min_learned_score) {
-                ++learned_choice;
-                if(chip_rating >= min_rand_score) {
+    if(USE_RANDOM_MOVES) {
+        if(max_score > (4 * IT_STRAIGHT_4)) {
+            for(i = 0; i < successors->len; ++i) {
+                if((successors->cells[i])->chip_rating >= min_rand_score) {
                     ++rand_choice;
                     continue;
                 }
+                break;
             }
-            break;
+            ++i;
         }
-        ++i;
     }
 
     if(USE_LEARNED_MOVES) {
 
         /* find the learned winning scores, if any, for the board positions */
-        learned_choice = MIN(successors->len, learned_choice + 1);
-        if(learned_choice > 1) {
-            D( printf("looking to see if move has been learned... \n"); )
+        D( printf("looking to see if move has been learned... \n"); )
 
-            /* choose the best one. if they all have zero or none are in the db then
-             * fall through. */
-            for(i = 0; i < learned_choice; ++i) {
-                cell = successors->cells[i];
-                /* hash of the move we *might* make */
-                cell->player_id = player_id;
-                hash_board(board, &(board_hash[0]));
-                cell->player_id = NO_PLAYER;
+        /* choose the best one. if they all have zero or none are in the db then
+         * fall through. */
+        for(i = 0; i < successors->len; ++i) {
 
-                if(PLAYER_1 == player_id) {
-                    curr_insight = player1_score(&(board_hash[0]), 32);
-                } else {
-                    curr_insight = player2_score(&(board_hash[0]), 32);
-                }
+            cell = successors->cells[i];
 
-                printf("insight score %d of %s \n", curr_insight, board_hash);
+            /* hash of the move we *might* make */
+            cell->player_id = player_id;
+            hash_board(board, &(board_hash[0]));
+            cell->player_id = NO_PLAYER;
 
-                /* we haven't learned this board position */
-                if(-1 == curr_insight) {
-                    continue;
-                }
-
-                /* this looks like it might be aood choice :D */
-                if(curr_insight > max_insight) {
-
-                    max_insight = curr_insight;
-                    insightful_cell = cell;
-                }
+            if(PLAYER_1 == player_id) {
+                curr_insight = player1_score(&(board_hash[0]), 32);
+            } else {
+                curr_insight = player2_score(&(board_hash[0]), 32);
             }
 
-            if(max_insight > 0 && NULL != insightful_cell) {
-                D( printf("using learned move. \n"); )
-                return insightful_cell;
+            /* ignore this board position and kill the successor */
+            if(-1 == curr_insight) {
+                continue;
             }
+
+            /* kill off the successor */
+            /*if(curr_insight <= 0) {
+                if(!USE_RANDOM_MOVES) {
+                    D( printf("killing successor %d \n", i); )
+                    successors->cells[i] = NULL;
+                }
+                continue;
+            }*/
+
+            D( printf("insight score %d of %s \n", curr_insight, board_hash); )
+
+            /* this looks like it might be aood choice :D */
+            if(curr_insight > max_insight) {
+                max_insight = curr_insight;
+                insightful_cell = cell;
+            }
+        }
+
+        if(max_insight > MIN_INSIGHT && NULL != insightful_cell) {
+            D( printf("using learned move. \n"); )
+            return insightful_cell;
         }
     }
 
@@ -225,6 +232,22 @@ static board_cell_t *choose_succesor(board_t *board,
            rand_choice - 1
        );
     )
+
+    /* go take the first non-nulled cell; cells will be nulled by the learning
+     * algorithm. */
+    /*rand_val = rand_val % rand_choice;
+    for(i = 0, j = 0; i < successors->len; ++i) {
+        if(NULL == successors->cells[i]) {
+            continue;
+        } else {
+            if(j == rand_val) {
+                D( printf("returning successor %d \n", i); )
+                return successors->cells[i];
+            }
+            ++j;
+        }
+    }*/
+
     return successors->cells[rand_val % rand_choice];
 }
 
