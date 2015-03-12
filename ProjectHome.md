@@ -1,0 +1,1 @@
+This is a C implementation of a program that will play Gomoku. This implementation was made for assignment 2 of my cs3346a class of the 2009/2010 academic year.
